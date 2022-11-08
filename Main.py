@@ -4,10 +4,17 @@ from OrbitalMechanics.OrbitalMotionSimulator import planetary_data as pd
 from OrbitalMechanics.OrbitalMotionSimulator import Tools
 from OrbitalMechanics.OrbitalMotionSimulator.OrbitPropagator import OrbitPropagator
 
-plt.style.use('dark_background')
+# plt.style.use('dark_background')
 
 if __name__ == '__main__':
     cb = pd.earth
+
+    # ISS
+    c0=[cb['radius']+414.0, 0.0006189, 51.64, 0, 234.0, 105.6]
+    # GEO
+    c1 = [cb['radius']+35800.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    # Random
+    c2 = [cb['radius']+3000, 0.3, 20, 0.0, 15.0, 40.0]
 
     # Initial orbit parameters
     r_mag = cb['radius'] + 400
@@ -29,9 +36,11 @@ if __name__ == '__main__':
     # 100 seconds dt
     dt = 100.0
 
-    op0 = OrbitPropagator(r0, v0, tspan, dt)
-    op1 = OrbitPropagator(r1, v1, tspan, dt)
+    op0 = OrbitPropagator(c0, tspan, dt, kep=True)
+    op1 = OrbitPropagator(c1, tspan, dt, kep=True)
+    op2 = OrbitPropagator(c2, tspan, dt, kep=True)
     op0.propagate_orbit()
     op1.propagate_orbit()
+    op2.propagate_orbit()
 
-    Tools.plot_n_orbits([op0.rs, op1.rs], labels=['0', '1'], show_plot=True)
+    Tools.plot_n_orbits([op0.rs, op1.rs, op2.rs], labels=['ISS', 'GEO', 'Random'], show_plot=True)

@@ -5,12 +5,17 @@ import matplotlib.pyplot as plt
 from scipy.integrate import ode
 
 from OrbitalMechanics.OrbitalMotionSimulator import planetary_data as pd
+from OrbitalMechanics.OrbitalMotionSimulator import Tools
 
 
 class OrbitPropagator:
-    def __init__(self, r0, v0, tspan, dt, cb=pd.earth):
-        self.r0 = r0
-        self.v0 = v0
+    def __init__(self, state0, tspan, dt, kep=False, deg=True, cb=pd.earth):
+        if kep:
+            self.r0, self.v0 = Tools.kep2car(state0, deg=deg, mu=cb['mu'])
+        else:
+            self.r0 = state0[:3]
+            self.v0 = state0[3:]
+
         self.tspan = tspan
         self.dt = dt
         self.cb = cb
@@ -25,7 +30,7 @@ class OrbitPropagator:
         self.vs = np.zeros((self.n_steps, 3))
 
         # Initial conditions
-        self.y0 = self.r0 + self.v0
+        self.y0 = np.concatenate((self.r0, self.v0))
         self.ys[0] = np.array(self.y0)
         self.steps = 1
 
