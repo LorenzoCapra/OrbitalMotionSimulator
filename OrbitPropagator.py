@@ -8,8 +8,18 @@ from OrbitalMechanics.OrbitalMotionSimulator import planetary_data as pd
 from OrbitalMechanics.OrbitalMotionSimulator import Tools
 
 
+def perturbations():
+    return {
+        'J2': False,
+        'drag': False,
+        'srp': False,
+        'moon_g': False,
+        'sun_g': False
+    }
+
+
 class OrbitPropagator:
-    def __init__(self, state0, tspan, dt, kep=False, deg=True, cb=pd.earth):
+    def __init__(self, state0, tspan, dt, kep=False, deg=True, cb=pd.earth, perts=perturbations()):
         if kep:
             self.r0, self.v0 = Tools.kep2car(state0, deg=deg, mu=cb['mu'])
         else:
@@ -39,6 +49,11 @@ class OrbitPropagator:
         self.solver.set_integrator('lsoda')
         self.solver.set_initial_value(self.y0, 0)
 
+        # Define perturbations dictionary
+        self.perts = perts
+
+        self.propagate_orbit()
+
     def propagate_orbit(self):
         # Propagate the orbit
         while self.solver.successful() and self.steps < self.n_steps:
@@ -57,9 +72,21 @@ class OrbitPropagator:
         norm_r = norm(r)
 
         # Two-Body acceleration
-        ax, ay, az = -r * self.cb['mu'] / norm_r ** 3
+        a = -r * self.cb['mu'] / norm_r ** 3
 
-        return [vx, vy, vz, ax, ay, az]
+        # J2 perturbation:
+        if self.perts['J2']:
+            z2 = r[2] ** 2
+            r2 = norm_r ** 2
+            tx = r[0] / norm_r * (5 * z2 / r2 - 1)
+            ty = r[1] / norm_r * (5 * z2 / r2 - 1)
+            tz = r[2] / norm_r * (5 * z2 / r2 - 3)
+
+            a_j2 = 1.5 * self.cb['J2'] * self.cb['mu'] * self.cb['radius'] ** 2 / norm_r ** 4 * np.array([tx, ty, tz])
+
+            a += a_j2
+
+        return [vx, vy, vz, a[0], a[1], a[2]]
 
     def plot(self, show_plot=False, save_plot=False, title='Test Title', k=1):
         fig = plt.figure(figsize=(10, 6))
