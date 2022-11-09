@@ -4,17 +4,25 @@ from numpy.linalg import norm
 import matplotlib.pyplot as plt
 from scipy.integrate import ode
 
-from OrbitalMechanics.OrbitalMotionSimulator import planetary_data as pd
-from OrbitalMechanics.OrbitalMotionSimulator import Tools
+import planetary_data as pd
+import Tools
+import SpiceTools
 
 
 def perturbations():
     return {
         'J2': False,
-        'drag': False,
+        'aero': False,
+        'cd': 0,
+        'A': 0,
+        'CR': 0,
+        'A_srp': 0,
+        'moon_gravity': False,
+        'sun_gravity': False,
         'srp': False,
-        'moon_g': False,
-        'sun_g': False
+        'thrust': 0,
+        'isp': 0,
+        'n_bodies': []
     }
 
 
@@ -38,6 +46,7 @@ class OrbitPropagator:
         self.ts = np.zeros((self.n_steps, 1))
         self.rs = np.zeros((self.n_steps, 3))
         self.vs = np.zeros((self.n_steps, 3))
+        self.kep = np.zeros((self.n_steps, 6))
 
         # Initial conditions
         self.y0 = np.concatenate((self.r0, self.v0))
@@ -88,6 +97,12 @@ class OrbitPropagator:
 
         return [vx, vy, vz, a[0], a[1], a[2]]
 
+    def calculate_kep(self, deg=True):
+        print('Calculating keplerian elements...')
+
+        for n in range(self.steps):
+            self.kep[n, :] = SpiceTools.rv2kep(self.ys[n, :6], mu=self.cb['mu'], deg=deg)
+
     def plot(self, show_plot=False, save_plot=False, title='Test Title', k=1):
         fig = plt.figure(figsize=(10, 6))
         ax = fig.add_subplot(111, projection='3d')
@@ -127,3 +142,69 @@ class OrbitPropagator:
             plt.show()
         if save_plot:
             plt.savefig(title+'png', dpi=300)
+
+    def plot_kep(self, hours=False, days=False, show_plot=False, save_plot=False,
+                 title='Kep', figsize=(12, 8)):
+        print('Plotting keplerian elements...')
+
+        # create figure and axis instances:
+        fig, axs = plt.subplots(nrows=2, ncols=3, figsize=figsize)
+
+        # figure title:
+        fig.suptitle(title, fontsize=20)
+
+        # x-axis:
+        if hours:
+            ts = self.ts / 3600
+            xlabel = 'Time Elapsed (hours)'
+        elif days:
+            ts = self.ts / 3600 / 24
+            xlabel = 'Time Elapsed (days)'
+        else:
+            ts = self.ts
+            xlabel = 'Time Elapsed (s)'
+
+        # plot true anomaly:
+        axs[0, 0].plot(ts, self.kep[:, 5])
+        axs[0, 0].set_title('True anomaly vs Time')
+        axs[0, 0].grid(True)
+        axs[0, 0].set_ylabel('Angle (deg)')
+
+        # plot semi-major axis:
+        axs[1, 0].plot(ts, self.kep[:, 0])
+        axs[1, 0].set_title('Semi-Major Axis vs Time')
+        axs[1, 0].grid(True)
+        axs[1, 0].set_ylabel('Semi-Major Axis (km)')
+        axs[1, 0].set_xlabel(xlabel)
+
+        # plot eccentricity:
+        axs[0, 1].plot(ts, self.kep[:, 1])
+        axs[0, 1].set_title('Eccentricity vs Time')
+        axs[0, 1].grid(True)
+        axs[0, 1].set_xlabel(xlabel)
+
+        # plot inclination:
+        axs[1, 1].plot(ts, self.kep[:, 2])
+        axs[1, 1].set_title('Inclination vs Time')
+        axs[1, 1].grid(True)
+        axs[1, 1].set_ylabel('Angle (deg)')
+        axs[1, 1].set_xlabel(xlabel)
+
+        # plot RAAN:
+        axs[0, 2].plot(ts, self.kep[:, 3])
+        axs[0, 2].set_title('RAAN vs Time')
+        axs[0, 2].grid(True)
+        axs[0, 2].set_ylabel('Angle (deg)')
+        axs[0, 2].set_xlabel(xlabel)
+
+        # plot argument of perigee:
+        axs[1, 2].plot(ts, self.kep[:, 4])
+        axs[1, 2].set_title('Argument of Perigee vs Time')
+        axs[1, 2].grid(True)
+        axs[1, 2].set_ylabel('Angle (deg)')
+        axs[1, 2].set_xlabel(xlabel)
+
+        if show_plot:
+            plt.show()
+        if save_plot:
+            plt.savefig(title + '.png', dpi=300)

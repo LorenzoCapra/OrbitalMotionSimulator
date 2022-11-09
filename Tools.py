@@ -3,7 +3,7 @@ import numpy as np
 from numpy.linalg import norm
 from math import sqrt, cos, sin, tan, atan, acos
 import datetime
-from OrbitalMechanics.OrbitalMotionSimulator import planetary_data as pd
+import planetary_data as pd
 
 d2r = np.pi/180.0
 r2d = 180.0/np.pi
@@ -79,8 +79,11 @@ def kep2car(kep, deg=False, mu=pd.earth['mu']):
 
     return r, v
 
+# Unused -> look at the function from SpiceTools
+def rv2kep(state, mu=pd.earth['mu'], deg=False, print_results=False):
+    r = state[:3]
+    v = state[3:]
 
-def rv2kep(r, v, mu=pd.earth['mu'], degrees=False, print_results=False):
     r_norm = np.linalg.norm(r)
     h = np.cross(r, v)
     h_norm = np.linalg.norm(h)
@@ -122,7 +125,7 @@ def rv2kep(r, v, mu=pd.earth['mu'], degrees=False, print_results=False):
         print('w', w*r2d)
         print('teta', teta*r2d)
 
-    if degrees:
+    if deg:
         return [a, e_norm, i*r2d, om*r2d, w*r2d, teta*r2d]
     else:
         return [a, e_norm, i, om, w, teta]
