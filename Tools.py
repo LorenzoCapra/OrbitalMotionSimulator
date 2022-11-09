@@ -237,3 +237,31 @@ def true_anomaly(arr):
 
 def tle2cart(tle_filename):
     return kep2car(tle2kep(tle_filename))
+
+
+# calculate atmospheric density from given altitude:
+def calc_atmospheric_density(z):
+    rhos, zs = find_rho_z(z)
+    if rhos[0] == 0:
+        return 0
+
+    Hi = -(zs[1]-zs[0])/m.log(rhos[1]/rhos[0])
+
+    return rhos[0]*m.exp(-(z-zs[0])/Hi)
+
+
+# find endpoints of altitude and density surrounding input altitude:
+def find_rho_z(z, zs=pd.earth['zs'], rhos=pd.earth['rhos']):
+    if not 1 < z < 1000:
+        return [[0, 0], [0, 0]]
+
+    for n in range(len(rhos)-1):
+        if zs[n] < z < zs[n+1]:
+            return [[rhos[n], rhos[n+1]], [zs[n], zs[n+1]]]
+
+    return [[0, 0], [0, 0]]
+
+
+# Compute escape velocity at a certain point:
+def esc_v(r, mu=pd.earth['mu']):
+    return sqrt(2*mu/r)

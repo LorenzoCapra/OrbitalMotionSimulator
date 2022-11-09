@@ -1,4 +1,3 @@
-from math import sqrt
 import planetary_data as pd
 import Tools
 from OrbitPropagator import OrbitPropagator, perturbations
