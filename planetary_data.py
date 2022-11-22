@@ -10,7 +10,7 @@ sun = {
     'radius': 695700,
     'G1': 1e9,
     'deorbit_altitude': 2*695510,
-    'spice_file': 'de432s.bsp'
+    'spice_file': 'Data/spice/spk/de432s.bsp'
 }
 
 atm = np.array([[63.096, 2.059e-4], [251.189, 5.909e-11], [1000.0, 3.561e-15]])
@@ -24,7 +24,7 @@ earth = {
     'rhos': atm[:, 1]*10**8,  # kg/km^3
     'atm_rot_vector': np.array([0, 0, 72.9211e-6]),  # rad/s
     'deorbit_altitude': 100,  # km
-    'spice_file': 'de432s.bsp'
+    'spice_file': 'Data/spice/spk/de432s.bsp'
 }
 
 moon = {
@@ -34,6 +34,6 @@ moon = {
     'radius': 1737.1,
     'orbit_T': 29*24*3600 + 12*3600 + 44*60 + 2.8,
     'dist2earth': 384400,
-    'spice_file': 'de432s.bsp'
+    'spice_file': 'Data/spice/spk/de432s.bsp'
 }
 # moon['orbit_w'] = 2*np.pi/moon['orbit_T']

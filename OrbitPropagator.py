@@ -61,9 +61,9 @@ class OrbitPropagator:
         self.alts = np.zeros((self.n_steps, 1))
 
         # Initial conditions
-        if self.mass != 0:
+        if perts['thrust']:
             self.ys = np.zeros((self.n_steps, 7))
-            self.y0 = np.concatenate((self.r0, self.v0, self.mass))
+            self.y0 = np.concatenate((self.r0, self.v0, [self.mass]))
         else:
             self.ys = np.zeros((self.n_steps, 6))
             self.y0 = np.concatenate((self.r0, self.v0))
@@ -94,7 +94,7 @@ class OrbitPropagator:
         # check if loading in spice data:
         if self.perts['n_bodies'] or self.perts['srp']:
             # load leap seconds kernel:
-            leap_seconds = 'naif0012.tls'
+            leap_seconds = 'Data/spice/lsk/naif0012.tls'
 
             spice.furnsh(leap_seconds)
 
@@ -149,6 +149,7 @@ class OrbitPropagator:
     def dynamics(self, t, y):
         # Unpack the state
         rx, ry, rz, vx, vy, vz = y
+
         r = np.array([rx, ry, rz])
         v = np.array([vx, vy, vz])
         norm_r = norm(r)
@@ -447,3 +448,9 @@ class OrbitPropagator:
             plt.show()
         if save_plot:
             plt.savefig(title + '.png', dpi=dpi)
+
+    def write_traj(self):
+        pass
+
+    def calc_lat_lon(self):
+        self.lat_longs, self.rs_ecef, _ = SpiceTools.inert2latlong(self.rs, self.tspan, self.frame)

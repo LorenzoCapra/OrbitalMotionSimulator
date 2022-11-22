@@ -1,8 +1,20 @@
 import spiceypy as spice
 import numpy as np
+import os
+
 import planetary_data as pd
 
+
 r2d = 180 / np.pi
+
+base_dir = os.path.join(
+	os.path.dirname( os.path.realpath( __file__ ) ),
+	os.path.join( '..', '..', 'Data', 'spice' )
+	)
+
+leapseconds_kernel = os.path.join( base_dir, 'lsk/naif0012.tls' )
+de432              = os.path.join( base_dir, 'spk/de432s.bsp'   )
+pck00010           = os.path.join( base_dir, 'pck/pck00010.tpc' )
 
 
 # Function to retrieve ID, name and time coverage of all objects in space:
@@ -70,3 +82,28 @@ def rv2kep(state, et=0, mu=pd.earth['mu'], deg=True):
         aop *= r2d
 
     return [a, e, i, raan, aop, ta]
+
+def inert2ecef(rs, tspan, frame='J200', filenames=None):
+    steps = rs.shape[0]
+    Cs = np.zeros((steps, 3, 3))
+    rs_ecef = np.zeros(rs.shape)
+
+    for step in range(steps):
+        Cs[step, :, :] = spice.pxform(frame, 'ITRF93', tspan[step])
+        rs_ecef[step, :] = np.dot(Cs[step, :, :], rs[step, :])
+
+    if filenames is not None:
+        pass
+
+    return rs_ecef, Cs
+
+def inert2latlong(rs, tspan, frame='J200', filenames=None):
+    steps = rs.shape[0]
+    latlongs = np.zeros((steps, 3))
+    rs_ecef, Cs = inert2ecef(rs, tspan, frame, filenames)
+
+    for step in range(rs.shape[0]):
+        r_norm, lat, lon = spice.reclat(rs_ecef[step, :])
+        latlongs[step, :] = [lat*r2d, lon*r2d, r_norm]
+
+    return latlongs, rs_ecef, Cs

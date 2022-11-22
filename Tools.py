@@ -1,35 +1,275 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.linalg import norm
-from math import sqrt, cos, sin, tan, atan, acos
+from math import sqrt, cos, sin, tan, atan, acos, pi, log, exp
 import datetime
+import os
+
 import planetary_data as pd
 
 d2r = np.pi/180.0
 r2d = 180.0/np.pi
+km2AU = 149598073.
 
-def plot_n_orbits(rs, labels, cb=pd.earth, show_plot=False, save_plot=False, title='Many Orbits', k=1):
+time_handler = {
+	'seconds': { 'coeff': 1.0,        'xlabel': 'Time (seconds)' },
+	'hours'  : { 'coeff': 3600.0,     'xlabel': 'Time (hours)'   },
+	'days'   : { 'coeff': 86400.0,    'xlabel': 'Time (days)'    },
+	'years'  : { 'coeff': 31536000.0, 'xlabel': 'Time (years)'   }
+}
+
+dist_handler = {
+	'km'    : 1.0,
+	'ER'    : 1 / 6378.0,
+	'JR'    : 1 / 71490.0,
+	'AU'    : 6.68459e-9,
+	r'$\dfrac{km}{s}$': 1.0
+}
+
+COLORS = [
+	'm', 'deeppink', 'chartreuse', 'w', 'springgreen', 'peachpuff',
+	'white', 'lightpink', 'royalblue', 'lime', 'aqua' ] * 100
+
+COASTLINES_COORDINATES_FILE = os.path.join(
+	os.path.dirname( os.path.realpath( __file__ ) ),
+	os.path.join( '..', '..', 'Data', 'coastlines.csv' )
+	)
+
+EARTH_SURFACE_IMAGE = os.path.join(
+	os.path.dirname( os.path.realpath( __file__ ) ),
+	os.path.join( '..', '..', 'Data', 'earth_surface.png' )
+	)
+
+SURFACE_BODY_MAP = {
+	'earth'  : EARTH_SURFACE_IMAGE,
+}
+
+CITY_COLORS = [
+	'w', 'deeppink', 'chartreuse', 'magenta', 'springgreen', 'peachpuff',
+	'white', 'lightpink', 'royalblue', 'lime', 'aqua' ] * 100
+
+WORLD_CITIES_FILE = os.path.join(
+	os.path.dirname( os.path.realpath( __file__ ) ),
+	os.path.join( '..', '..', 'Data', 'world_cities.csv' )
+	)
+
+city_list0 = [
+	 'Seattle', 'Pasadena',                 # US
+	 'New York', 'San Luis Obispo',
+	 'Phoenix', 'Cape Canaveral',
+	 'Mexico City', 'Villahermosa',         # Mexico
+	 'New Delhi', 'Mumbai',                 # India
+	 'Tirunelveli', 'Surat', 'Chennai',
+	 'Olney', 'Norwich',                    # England
+	 'Ponce',                               # Puerto Rico
+	 'Berlin',                              # Germany
+	 'Lyon',                                # France
+	 'Vienna',                              # Austria
+	 'Madrid', 'Sevilla', 'Barcelona',      # Spain
+	 'Moscow',                              # Russia
+	 'Rome', 'Cortemaggiore',               # Italy
+	 'Aalborg',                             # Denmark
+	 'Sao Paulo',                           # Brazil
+	 'Luxembourg City', 'Esch-sur-Alzette', # Luxembourg
+	 'Toronto',                             # Canada
+	 'Tokyo',                               # Japan
+	 'Istanbul',                            # Turkey
+	 'Jihlava',                             # Czech Republic
+	 'Warsaw',                              # Poland
+	 'Zagreb',                              # Croatia
+	 'Sydney', 'Adelaide',                  # Australia
+	 'Dubai',                               # UAE
+	 'Port Louis',                          # Mauritius
+	 'Casablanca',                          # Morocco
+	 'Khartoum',                            # Sudan
+	 'Tunis',                               # Tunisia
+	 'Buenos Aires',                        # Argentina
+	 'Cape Town',                           # South Africa
+	 'Bucharest',                           # Romania
+	 'Bogota',                              # Colombia
+	 'Quito',                               # Ecuador
+	 'Noordwijk',                           # Netherlands
+	 'San Jose',                            # Costa Rica
+	 'Stockholm',                           # Sweden
+	 'Santiago',                            # Chile
+	 'Jakarta',                             # Indonesia
+	 'Antwerp',                             # Belgium
+	 'Geneva',                              # Switzerland
+	 'Manila',                              # Phillipines
+	 'Porto', 'Ponta Delgada',              # Portugal
+	 'Budapest',                            # Hungary
+	 'Panama City',                         # Panama
+	 'Cairo',                               # Egypt
+	 'Seoul',                               # South Korea
+	 'Broom Bridge',                        # Ireland
+	 'Lima',                                # Peru
+	 'Akure'                                # Nigeria
+]
+
+
+def plot_orbits(rs, args, vectors=[]):
+    _args = {
+        'figsize': (10, 8),
+        'labels': [''] * len(rs),
+        'colors': COLORS[:],
+        'AU': False,
+        'traj_lws': 3,
+        'dist_unit': 'km',
+        'groundtracks': False,
+        'cb_radius': 6378.0,
+        'cb_SOI': None,
+        'cb_SOI_color': 'c',
+        'cb_SOI_alpha': 0.7,
+        'cb_axes': True,
+        'cb_axes_mag': 2,
+        'cb_cmap': 'Blues',
+        'cb_axes_color': 'w',
+        'axes_mag': 0.8,
+        'axes_custom': None,
+        'title': 'Trajectories',
+        'legend': True,
+        'axes_no_fill': True,
+        'hide_axes': False,
+        'azimuth': False,
+        'elevation': False,
+        'show': False,
+        'filename': False,
+        'dpi': 300,
+        'vector_colors': [''] * len(vectors),
+        'vector_labels': [''] * len(vectors),
+        'vector_texts': False
+    }
+    for key in args.keys():
+        _args[key] = args[key]
+
+    fig = plt.figure(figsize=_args['figsize'])
+    ax = fig.add_subplot(111, projection='3d')
+
+    max_val = 0
+    n = 0
+
+    for r in rs:
+        _r = r.copy() * dist_handler[_args['dist_unit']]
+
+        ax.plot(_r[:, 0], _r[:, 1], _r[:, 2],
+                color=_args['colors'][n], label=_args['labels'][n],
+                zorder=10, linewidth=_args['traj_lws'])
+        ax.plot([_r[0, 0]], [_r[0, 1]], [_r[0, 2]], 'o',
+                color=_args['colors'][n])
+
+        if _args['groundtracks']:
+            rg = _r / np.linalg.norm(r, axis=1).reshape((r.shape[0], 1))
+            rg *= _args['cb_radius']
+
+            ax.plot(rg[:, 0], rg[:, 1], rg[:, 2], cs[n], zorder=10)
+            ax.plot([rg[0, 0]], [rg[0, 1]], [rg[0, 2]], cs[n] + 'o', zorder=10)
+
+        max_val = max([_r.max(), max_val])
+        n += 1
+
+    for vector in vectors:
+        ax.quiver(0, 0, 0,
+                  vector['r'][0], vector['r'][1], vector['r'][2],
+                  color=vector['color'], label=vector['label'])
+
+        if _args['vector_texts']:
+            vector['r'] *= _args['vector_text_scale']
+            ax.text(vector['r'][0], vector['r'][1], vector['r'][2],
+                    vector['label'],
+                    color=vector['color'])
+
+    _args['cb_radius'] *= dist_handler[_args['dist_unit']]
+    _u, _v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:20j]
+    _x = _args['cb_radius'] * np.cos(_u) * np.sin(_v)
+    _y = _args['cb_radius'] * np.sin(_u) * np.sin(_v)
+    _z = _args['cb_radius'] * np.cos(_v)
+    ax.plot_surface(_x, _y, _z, cmap=_args['cb_cmap'], zorder=1)
+
+    if _args['cb_SOI'] is not None:
+        _args['cb_SOI'] *= dist_handler[_args['dist_unit']]
+        _x *= _args['cb_SOI'] / _args['cb_radius']
+        _y *= _args['cb_SOI'] / _args['cb_radius']
+        _z *= _args['cb_SOI'] / _args['cb_radius']
+        ax.plot_wireframe(_x, _y, _z,
+                          color=_args['cb_SOI_color'],
+                          alpha=_args['cb_SOI_alpha'])
+
+    if _args['cb_axes']:
+        l = _args['cb_radius'] * _args['cb_axes_mag']
+        x, y, z = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+        u, v, w = [[l, 0, 0], [0, l, 0], [0, 0, l]]
+        ax.quiver(x, y, z, u, v, w, color=_args['cb_axes_color'])
+
+    xlabel = 'X (%s)' % _args['dist_unit']
+    ylabel = 'Y (%s)' % _args['dist_unit']
+    zlabel = 'Z (%s)' % _args['dist_unit']
+
+    if _args['axes_custom'] is not None:
+        max_val = _args['axes_custom']
+    else:
+        max_val *= _args['axes_mag']
+
+    ax.set_xlim([-max_val, max_val])
+    ax.set_ylim([-max_val, max_val])
+    ax.set_zlim([-max_val, max_val])
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_zlabel(zlabel)
+    ax.set_box_aspect([1, 1, 1])
+    ax.set_aspect('auto')
+
+    if _args['azimuth'] is not False:
+        ax.view_init(elev=_args['elevation'],
+                     azim=_args['azimuth'])
+
+    if _args['axes_no_fill']:
+        ax.w_xaxis.pane.fill = False
+        ax.w_yaxis.pane.fill = False
+        ax.w_zaxis.pane.fill = False
+
+    if _args['hide_axes']:
+        ax.set_axis_off()
+
+    if _args['legend']:
+        plt.legend()
+
+    if _args['filename']:
+        plt.savefig(_args['filename'], dpi=_args['dpi'])
+        print('Saved', _args['filename'])
+
+    if _args['show']:
+        plt.show()
+
+    plt.close()
+
+def plot_n_orbits(rs, labels, cb=pd.earth, show_plot=False, save_plot=False, title='Many Orbits',
+                  AU=False, k=1):
     fig = plt.figure(figsize=(10, 6))
     ax = fig.add_subplot(111, projection='3d')
 
     # Plot trajectories
     j = 0
     for r in rs:
+        if AU:
+            r /= km2AU
         ax.plot(r[:, 0], r[:, 1], r[:, 2], label=labels[j])
         ax.scatter3D(r[0, 0], r[0, 1], r[0, 2])
         j += 1
 
+    r_plot = cb['radius']
+    if AU:
+        r_plot /= km2AU
 
     # Plot Central Body:
     _u, _v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
-    _x = cb['radius'] * np.cos(_u) * np.sin(_v) * k
-    _y = cb['radius'] * np.sin(_u) * np.sin(_v) * k
-    _z = cb['radius'] * np.cos(_v) * k
+    _x = r_plot * np.cos(_u) * np.sin(_v) * k
+    _y = r_plot * np.sin(_u) * np.sin(_v) * k
+    _z = r_plot * np.cos(_v) * k
     ax.plot_surface(_x, _y, _z, cmap='Blues')
 
     # Plot the x,y,z axis:
     x, y, z = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
-    u, v, w = [[2 * cb['radius'], 0, 0], [0, 2 * cb['radius'], 0], [0, 0, 2 * cb['radius']]]
+    u, v, w = [[2 * r_plot, 0, 0], [0, 2 * r_plot, 0], [0, 0, 2 * r_plot]]
 
     ax.quiver(x, y, z, u, v, w, color='k')
 
@@ -38,9 +278,14 @@ def plot_n_orbits(rs, labels, cb=pd.earth, show_plot=False, save_plot=False, tit
     ax.set_ylim([-max_val, max_val])
     ax.set_zlim([-max_val, max_val])
 
-    ax.set_xlabel('X (km)')
-    ax.set_ylabel('Y (km)')
-    ax.set_zlabel('Z (km)')
+    if AU:
+        ax.set_xlabel('X (AU)')
+        ax.set_ylabel('Y (AU)')
+        ax.set_zlabel('Z (AU)')
+    else:
+        ax.set_xlabel('X (km)')
+        ax.set_ylabel('Y (km)')
+        ax.set_zlabel('Z (km)')
 
     # ax.set_aspect('equal')
 
@@ -84,16 +329,16 @@ def rv2kep(state, mu=pd.earth['mu'], deg=False, print_results=False):
     r = state[:3]
     v = state[3:]
 
-    r_norm = np.linalg.norm(r)
+    r_norm = norm(r)
     h = np.cross(r, v)
-    h_norm = np.linalg.norm(h)
+    h_norm = norm(h)
 
     # Inclination
     i = acos(h[2]/h_norm)
 
     # Eccentricity vector
     e = ((norm(v)**2-mu/r_norm)*r - np.dot(r, v)*v)/mu
-    e_norm = np.linalg.norm(e)
+    e_norm = norm(e)
 
     # Node line
     N = np.cross([0,0,1], h)
@@ -245,9 +490,9 @@ def calc_atmospheric_density(z):
     if rhos[0] == 0:
         return 0
 
-    Hi = -(zs[1]-zs[0])/m.log(rhos[1]/rhos[0])
+    Hi = -(zs[1]-zs[0])/log(rhos[1]/rhos[0])
 
-    return rhos[0]*m.exp(-(z-zs[0])/Hi)
+    return rhos[0]*exp(-(z-zs[0])/Hi)
 
 
 # find endpoints of altitude and density surrounding input altitude:
@@ -265,3 +510,177 @@ def find_rho_z(z, zs=pd.earth['zs'], rhos=pd.earth['rhos']):
 # Compute escape velocity at a certain point:
 def esc_v(r, mu=pd.earth['mu']):
     return sqrt(2*mu/r)
+
+
+# Hohmann transfer function:
+def hohmann_transfer(r0=0, rf=0, coes0=None, coes1=None, propagate=False, altitude=True, cb=pd.earth,
+                     write_output=False):
+    # Check if coes are passed in
+    if coes0:
+        # extract r0 and r1 values
+        r0 = coes0[0]
+        rf = coes1[0]
+    # if passing in altitude (not semi-major axis)
+    if altitude:
+        # add central body radius to r values
+        r0 += cb['radius']
+        rf += cb['radius']
+
+    # compute semi-major axis of transfer orbit
+    a_transfer = (r0 + rf) / 2.
+
+    # compute velocities of circular orbits
+    v_circ_init = sqrt(cb['mu']/r0)
+    v_circ_fin = sqrt(cb['mu']/rf)
+
+    # compute initial and final transfer orbit velocities
+    v0_transfer = sqrt(cb['mu'] * (2/r0 - 1/a_transfer))
+    vf_transfer = sqrt(cb['mu'] * (2/rf - 1/a_transfer))
+
+    # compute transfer time
+    t_transfer = pi * sqrt(a_transfer**3 / cb['mu'])
+
+    # compute delta V values
+    delta_vs = [abs(v0_transfer - v_circ_init), abs(v_circ_fin - vf_transfer)]
+
+    # propagate the orbits
+    if propagate:
+        # if coes not passed in
+        if not coes0:
+            # create coes list
+            coes0 = [r0, 0, 0, 0, 0, 0]
+            coes1 = [rf, 0, 0, 0, 0, 180.0]
+
+        # compute eccentricity of transfer orbit
+        e_transfer = 1 - r0/a_transfer
+
+        # coes for transfer orbit
+        coes_transfer = [a_transfer, e_transfer, coes1[2], coes0[3], coes0[4], 0]
+
+        # compute periods of initial and final orbit
+        T0 = 2*np.pi*(r0**3 / cb['mu']) ** 0.5
+        T1 = 2*np.pi*(rf**3 / cb['mu']) ** 0.5
+
+        return T0, T1, t_transfer, coes_transfer, delta_vs
+
+    return delta_vs, t_transfer
+
+
+# Stump function 1:
+def C2(psi):
+    return (1-cos(sqrt(psi)))/psi
+
+
+# Stump function 2:
+def C3(psi):
+    return (sqrt(psi) - sin(sqrt(psi))) / (psi*sqrt(psi))
+
+
+def plot_groundtracks( coords, args ):
+	_args = {
+		'figsize'    : ( 18, 9 ),
+		'markersize' : 1,
+		'labels'     : [ '' ] * len( coords ),
+		'city_names' : cities_lat_long.city_list0,
+		'colors'     : [ 'c', 'r', 'b', 'g', 'w', 'y' ],
+		'grid'       : True,
+		'title'      : 'Groundtracks',
+		'show'       : False,
+		'filename'   : False,
+		'dpi'        : 300,
+		'city_colors': CITY_COLORS[ : ],
+		'city_msize' : 3,
+		'city_fsize' : 10,
+		'legend'     : True,
+		'surface_image': True,
+		'surface_body' : 'earth',
+		'plot_coastlines': False
+	}
+	for key in args.keys():
+		_args[ key ] = args[ key ]
+
+	plt.figure( figsize = _args[ 'figsize' ] )
+
+	if _args[ 'surface_image' ]:
+		plt.imshow(
+			plt.imread( SURFACE_BODY_MAP[ _args[ 'surface_body' ] ] ),
+			extent = [ -180, 180, -90, 90 ] )
+
+	if _args[ 'plot_coastlines' ]:
+		coast_coords = np.genfromtxt( COASTLINES_COORDINATES_FILE,
+			delimiter = ',' )
+
+		plt.plot( coast_coords[ :, 0 ], coast_coords[ :, 1 ], 'mo',
+			markersize = 0.3 )
+
+	for n in range( len( coords ) ):
+		plt.plot( [ coords[ n ][ 0, 1 ] ], [ coords[ n ][ 0, 2 ] ], 'o',
+			color = _args[ 'colors' ][ n ],
+			label = _args[ 'labels' ][ n ] )
+		plt.plot( coords[ n ][ 1:, 1 ], coords[ n ][ 1:, 2 ], 'o',
+			color = _args[ 'colors' ][ n ],
+			markersize = _args[ 'markersize' ] )
+
+	# TODO save this as a .json
+	cities = city_dict()
+	n      = 0
+
+	for city in _args[ 'city_names' ]:
+		coords = cities[ city ]
+		plt.plot( [ coords[ 1 ] ], [ coords[ 0 ] ], 'o',
+			color      = _args[ 'city_colors' ][ n ],
+			markersize = _args[ 'city_msize' ] )
+
+		if n % 2 == 0:
+			xytext = ( 0, 2 )
+		else:
+			xytext = ( 0, -8 )
+
+		plt.annotate( city, [ coords[ 1 ], coords[ 0 ] ],
+					  textcoords = 'offset points', xytext = xytext,
+					  ha = 'center', color = _args[ 'city_colors' ][ n ],
+					  fontsize = _args[ 'city_fsize' ]
+					)
+		n += 1
+
+	plt.xlim( [ -180, 180 ] )
+	plt.ylim( [ -90, 90 ] )
+	plt.xticks( range( -180, 200, 20 ) )
+	plt.yticks( range( -90, 100, 10 ) )
+	plt.xlabel( r'Longitude (degrees $^\circ$)' )
+	plt.ylabel( r'Latitude (degrees $^\circ$)' )
+	plt.tight_layout()
+
+	if _args[ 'legend' ]:
+		plt.legend()
+
+	if _args[ 'grid' ]:
+		plt.grid( linestyle = 'dotted' )
+
+	if _args[ 'show' ]:
+		plt.show()
+
+	if _args[ 'filename' ]:
+		plt.savefig( _args[ 'filename' ], dpi = _args[ 'dpi' ] )
+
+
+
+def city_dict():
+	with open( WORLD_CITIES_FILE, 'r' ) as f:
+		lines = f.readlines()
+
+	header = lines[ 0 ]
+	cities = {}
+
+	for line in lines[ 1: ]:
+		line = line.split(',')
+
+		# create new dictionary for given city
+		try:
+			# city name and lat/long coordinates
+			cities[ line[ 1 ] ] = [ float( line[ 2 ] ), float( line[ 3 ] ) ]
+
+		except:
+			pass
+
+	return cities
