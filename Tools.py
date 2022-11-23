@@ -32,12 +32,12 @@ COLORS = [
 
 COASTLINES_COORDINATES_FILE = os.path.join(
 	os.path.dirname( os.path.realpath( __file__ ) ),
-	os.path.join( '..', '..', 'Data', 'coastlines.csv' )
+	os.path.join( 'Data', 'coastlines.csv' )
 	)
 
 EARTH_SURFACE_IMAGE = os.path.join(
 	os.path.dirname( os.path.realpath( __file__ ) ),
-	os.path.join( '..', '..', 'Data', 'earth_surface.png' )
+	os.path.join( 'Data', 'earth_surface.png' )
 	)
 
 SURFACE_BODY_MAP = {
@@ -50,7 +50,7 @@ CITY_COLORS = [
 
 WORLD_CITIES_FILE = os.path.join(
 	os.path.dirname( os.path.realpath( __file__ ) ),
-	os.path.join( '..', '..', 'Data', 'world_cities.csv' )
+	os.path.join( 'Data', 'world_cities.csv' )
 	)
 
 city_list0 = [
@@ -147,6 +147,7 @@ def plot_orbits(rs, args, vectors=[]):
 
     max_val = 0
     n = 0
+    cs = ['c', 'b', 'r', 'k', 'g', 'm', 'y', 'w', 'r-.']
 
     for r in rs:
         _r = r.copy() * dist_handler[_args['dist_unit']]
@@ -243,18 +244,23 @@ def plot_orbits(rs, args, vectors=[]):
     plt.close()
 
 def plot_n_orbits(rs, labels, cb=pd.earth, show_plot=False, save_plot=False, title='Many Orbits',
-                  AU=False, k=1):
+                  AU=False, cmap='Blues', k=1):
     fig = plt.figure(figsize=(10, 6))
     ax = fig.add_subplot(111, projection='3d')
 
     # Plot trajectories
     j = 0
+    max_val = 0
     for r in rs:
         if AU:
             r /= km2AU
         ax.plot(r[:, 0], r[:, 1], r[:, 2], label=labels[j])
         ax.scatter3D(r[0, 0], r[0, 1], r[0, 2])
         j += 1
+
+        max__ = np.max(r)
+        if max__ > max_val:
+            max_val = max__
 
     r_plot = cb['radius']
     if AU:
@@ -265,7 +271,7 @@ def plot_n_orbits(rs, labels, cb=pd.earth, show_plot=False, save_plot=False, tit
     _x = r_plot * np.cos(_u) * np.sin(_v) * k
     _y = r_plot * np.sin(_u) * np.sin(_v) * k
     _z = r_plot * np.cos(_v) * k
-    ax.plot_surface(_x, _y, _z, cmap='Blues')
+    ax.plot_surface(_x, _y, _z, cmap=cmap)
 
     # Plot the x,y,z axis:
     x, y, z = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
@@ -273,7 +279,6 @@ def plot_n_orbits(rs, labels, cb=pd.earth, show_plot=False, save_plot=False, tit
 
     ax.quiver(x, y, z, u, v, w, color='k')
 
-    max_val = np.max(np.abs(rs))
     ax.set_xlim([-max_val, max_val])
     ax.set_ylim([-max_val, max_val])
     ax.set_zlim([-max_val, max_val])
@@ -566,6 +571,99 @@ def hohmann_transfer(r0=0, rf=0, coes0=None, coes1=None, propagate=False, altitu
     return delta_vs, t_transfer
 
 
+# Solve the Lambert Problem:
+def lamberts_universal_variables(r0, r1, deltat, tm=1, mu=pd.earth['mu'], tol=1e-6,
+                                 max_steps=200, psi=0, psi_u=4*pi**2, psi_l=4*pi):
+    # Calculate square root of the mu parameter:
+    sqrt_mu = sqrt(mu)
+
+    # Calculate norms of position vectors:
+    r0_norm = norm(r0)
+    r1_norm = norm(r1)
+
+    # Calculate gamma parameter:
+    gamma = np.dot(r0, r1)/r0_norm/r1_norm
+
+    # Calculate beta parameter:
+    beta = tm*sqrt(1-gamma**2)
+
+    # Calculate A parameter:
+    A = tm*sqrt(r0_norm*r1_norm*(1+gamma))
+
+    # if A=0, solution can't be computed:
+    if A == 0:
+        return np.array([0, 0, 0]), np.array([0, 0, 0])
+
+    # Initial values of c2 and c3 parameters:
+    c2 = 0.5
+    c3 = 1/6.0
+
+    # Counter and Solved variables:
+    step = 0
+    solved = False
+
+    # While tolerance not met and not at max step:
+    for n in range(max_steps):
+        # Calculate B parameter:
+        B = r0_norm + r1_norm + A*(psi*c3-1)/sqrt(c2)
+
+        # if A and B parameter out of range:
+        if A>0.0 and B<0.0:
+            # increase lower psi value:
+            psi_l += np.pi
+
+            # recalculate B parameter:
+            B *= -1
+
+        # Calculate Universal Variable cubed:
+        chi3 = sqrt(B/c2)**3
+
+        # Compute deltat variable:
+        deltat_ = (chi3*c3 + A*sqrt(B))/sqrt_mu
+
+        # if difference between deltat variables is within the tolerance:
+        if abs(deltat - deltat_)<tol:
+            # set Solved variable to True:
+            solved = True
+
+            # break out of the for loop:
+            break
+
+        # if it's not:
+        if deltat_ <= deltat:
+            # adjust lower psi value:
+            psi_l = psi
+
+        # else: deltat_ > deltat
+        else:
+            # adjust upper psi value:
+            psi_u = psi
+
+        # Update psi, c2, c3 values:
+        psi = (psi_u + psi_l)/2.0
+        c2 = C2(psi)
+        c3 = C3(psi)
+        print(psi)
+
+    # Check if maximum number of steps is reached:
+    if not solved:
+        # algorithm did not converge on a psi value:
+        print('Lamberts UV variables did not converge')
+        return np.array([0, 0, 0]), np.array([0, 0, 0])
+
+    # Calculate coefficients:
+    f = 1 - B/r0_norm
+    g = A*sqrt(B/mu)
+    gdot = 1 - B/r1_norm
+
+    # Calculate velocity vector:
+    v0 = (r1 - f*r0)/g
+    v1 = (gdot*r1 - r0)/g
+
+    return v0, v1
+
+
+
 # Stump function 1:
 def C2(psi):
     return (1-cos(sqrt(psi)))/psi
@@ -576,16 +674,73 @@ def C3(psi):
     return (sqrt(psi) - sin(sqrt(psi))) / (psi*sqrt(psi))
 
 
+def groundtracks(coords, labels=None, city_names=None, cs=['w', 'C3', 'b', 'g', 'C1'],
+                 surface_image=False, coastlines=False, title='Groundtracks',
+                 show_plot=False, save_plot=False, filename='groundtracks.png', dpi=300):
+    plt.figure(figsize=(12,6))
+
+    if surface_image:
+        plt.imshow(
+            plt.imread(SURFACE_BODY_MAP['earth']), extent=[-180, 180, -90, 90]
+        )
+
+    if coastlines:
+        coast_coords = np.genfromtxt(COASTLINES_COORDINATES_FILE,
+                                     delimiter=',')
+
+        plt.plot(coast_coords[:, 0], coast_coords[:, 1], 'mo',
+                 markersize=0.3)
+
+    for n in range(len(coords)):
+        if labels is None:
+            label = str(n)
+        else:
+            label = labels[n]
+
+        plt.plot(coords[n][0,0], coords[n][0,1], cs[n]+'o', label=label)
+        plt.plot(coords[n][1:,0], coords[n][1:,1], cs[n]+'o', markersize=1)
+
+    cities = city_dict()
+    n = 0
+
+    for city in city_names:
+        coords_ = cities[city]
+        plt.plot([coords_[1]], [coords_[0]], cs[n%len(cs)]+'o', markersize=2)
+
+        if n % 2 == 0:
+            xytext = (0,2)
+        else:
+            xytext = (0,-8)
+
+        plt.annotate(city, [coords_[1], coords_[0]], textcoords='offset points', xytext=xytext,
+                     ha='center', color=cs[n%len(cs)], fontsize='small')
+
+        n += 1
+
+    plt.grid(linestyle='dotted')
+    plt.xlim([-180, 180])
+    plt.ylim([-90, 90])
+    plt.xlabel(r'Longitude (degrees $^\circ$)')
+    plt.ylabel(r'Latitude (degrees $^\circ$)')
+    plt.title(title)
+    plt.legend()
+
+    if save_plot:
+        plt.savefig(filename, dpi=dpi)
+
+    if show_plot:
+        plt.show()
+
 def plot_groundtracks( coords, args ):
 	_args = {
 		'figsize'    : ( 18, 9 ),
 		'markersize' : 1,
 		'labels'     : [ '' ] * len( coords ),
-		'city_names' : cities_lat_long.city_list0,
+		'city_names' : city_list0,
 		'colors'     : [ 'c', 'r', 'b', 'g', 'w', 'y' ],
 		'grid'       : True,
 		'title'      : 'Groundtracks',
-		'show'       : False,
+		'show'       : True,
 		'filename'   : False,
 		'dpi'        : 300,
 		'city_colors': CITY_COLORS[ : ],
@@ -628,7 +783,7 @@ def plot_groundtracks( coords, args ):
 	for city in _args[ 'city_names' ]:
 		coords = cities[ city ]
 		plt.plot( [ coords[ 1 ] ], [ coords[ 0 ] ], 'o',
-			color      = _args[ 'city_colors' ][ n ],
+			color      = _args[ 'city_colors' ][ n%len(CITY_COLORS) ],
 			markersize = _args[ 'city_msize' ] )
 
 		if n % 2 == 0:
@@ -638,7 +793,7 @@ def plot_groundtracks( coords, args ):
 
 		plt.annotate( city, [ coords[ 1 ], coords[ 0 ] ],
 					  textcoords = 'offset points', xytext = xytext,
-					  ha = 'center', color = _args[ 'city_colors' ][ n ],
+					  ha = 'center', color = _args[ 'city_colors' ][ n%len(CITY_COLORS) ],
 					  fontsize = _args[ 'city_fsize' ]
 					)
 		n += 1

@@ -59,6 +59,7 @@ class OrbitPropagator:
         self.vs = np.zeros((self.n_steps, 3))
         self.kep = np.zeros((self.n_steps, 6))
         self.alts = np.zeros((self.n_steps, 1))
+        self.lat_longs = np.zeros((self.n_steps, 3))
 
         # Initial conditions
         if perts['thrust']:
@@ -90,6 +91,12 @@ class OrbitPropagator:
         # Fill in the rest of stop conditions:
         for key in self.stop.keys():
             self.stop_condition_functions.append(self.stop_condition_map[key])
+
+        # convert start date to seconds after J2000:
+        self.start_time = spice.utc2et(self.date0)
+
+        # create time span array in seconds after J2000:
+        self.spice_tspan = np.linspace(self.start_time, self.start_time + self.tspan, self.n_steps)
 
         # check if loading in spice data:
         if self.perts['n_bodies'] or self.perts['srp']:
@@ -147,8 +154,12 @@ class OrbitPropagator:
         self.alts = self.alts[:self.steps]
 
     def dynamics(self, t, y):
-        # Unpack the state
-        rx, ry, rz, vx, vy, vz = y
+        if self.perts['thrust']:
+            # Unpack the state
+            rx, ry, rz, vx, vy, vz, mass = y
+        else:
+            # Unpack the state
+            rx, ry, rz, vx, vy, vz = y
 
         r = np.array([rx, ry, rz])
         v = np.array([vx, vy, vz])
@@ -453,4 +464,4 @@ class OrbitPropagator:
         pass
 
     def calc_lat_lon(self):
-        self.lat_longs, self.rs_ecef, _ = SpiceTools.inert2latlong(self.rs, self.tspan, self.frame)
+        self.lat_longs, self.rs_ecef, _ = SpiceTools.inert2latlong(self.rs, self.spice_tspan, self.frame)

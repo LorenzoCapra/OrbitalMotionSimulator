@@ -37,3 +37,10 @@ moon = {
     'spice_file': 'Data/spice/spk/de432s.bsp'
 }
 # moon['orbit_w'] = 2*np.pi/moon['orbit_T']
+
+point = {
+    'name': 'Point',
+    'mass': 0,
+    'mu': 0,
+    'radius': 0,
+}
