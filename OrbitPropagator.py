@@ -92,6 +92,14 @@ class OrbitPropagator:
         for key in self.stop.keys():
             self.stop_condition_functions.append(self.stop_condition_map[key])
 
+        # load leap seconds kernel:
+        leap_seconds = 'Data/spice/lsk/naif0012.tls'
+
+        spice.furnsh(leap_seconds)
+
+        # add to list of loaded spice files:
+        self.spice_files_loaded.append(leap_seconds)
+
         # convert start date to seconds after J2000:
         self.start_time = spice.utc2et(self.date0)
 
@@ -100,19 +108,6 @@ class OrbitPropagator:
 
         # check if loading in spice data:
         if self.perts['n_bodies'] or self.perts['srp']:
-            # load leap seconds kernel:
-            leap_seconds = 'Data/spice/lsk/naif0012.tls'
-
-            spice.furnsh(leap_seconds)
-
-            # add to list of loaded spice files:
-            self.spice_files_loaded.append(leap_seconds)
-
-            # convert start date to seconds after J2000:
-            self.start_time = spice.utc2et(self.date0)
-
-            # create time span array in seconds after J2000:
-            self.spice_tspan = np.linspace(self.start_time, self.start_time + self.tspan, self.n_steps)
 
             # if srp, get states of the Sun:
             if self.perts['srp']:
