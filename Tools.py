@@ -4,12 +4,15 @@ from numpy.linalg import norm
 from math import sqrt, cos, sin, tan, atan, acos, pi, log, exp
 import datetime
 import os
+import spiceypy as spice
 
 import planetary_data as pd
+import SpiceTools as st
 
 d2r = np.pi/180.0
 r2d = 180.0/np.pi
 km2AU = 149598073.
+sec2day = 1/24/3600
 
 time_handler = {
 	'seconds': { 'coeff': 1.0,        'xlabel': 'Time (seconds)' },
@@ -675,7 +678,7 @@ def C3(psi):
 
 
 def groundtracks(coords, labels=None, city_names=None, cs=['w', 'C3', 'b', 'g', 'C1'],
-                 surface_image=False, coastlines=False, title='Groundtracks',
+                 surface_image=False, coastlines=True, title='Groundtracks',
                  show_plot=False, save_plot=False, filename='groundtracks.png', dpi=300):
     plt.figure(figsize=(12,6))
 
@@ -839,3 +842,198 @@ def city_dict():
 			pass
 
 	return cities
+
+
+def interplanetary_porkchop(config):
+    _config = {
+        'planet0': 'Earth',
+        'planet1': 'MARS_BARYCENTER',
+        'departure0': '2020-07-01',
+        'departure1': '2020-09-01',
+        'arrival0': '2020-11-01',
+        'arrival1': '2022-01-24',
+        'mu': pd.sun['mu'],
+        'step': 1/sec2day,
+        'frame': 'ECLIPJ2000',
+        'observer': 'SOLAR_SYSTEM_BARYCENTER',
+        'cutoff_v': 20.0,
+        'c3_levels': None,
+        'vinf_levels': None,
+        'tof_levels': None,
+        'dv_levels': None,
+        'dv_cmap': 'RdPu_r',
+        'figsize': (13,7),
+        'lw': 1.5,
+        'title': 'Porkchop Plot',
+        'title_dv': 'Dv Porkchop Plot',
+        'fontsize': 15,
+        'show': True,
+        'filename': None,
+        'filename_dv': None,
+        'dpi': 300,
+        'load': False
+    }
+
+    for key in config.keys():
+        _config[key] = config[key]
+
+    cutoff_v = _config['cutoff_v']
+    cutoff_c3 = cutoff_v**2
+
+    # Arrays of departure and arrival time
+    et_departures = np.arange(
+        spice.utc2et(_config['departure0']),
+        spice.utc2et(_config['departure1']) + _config['step'],
+        _config['step']
+    )
+    et_arrivals = np.arange(
+        spice.utc2et(_config['arrival0']),
+        spice.utc2et(_config['arrival1']) + _config['step'],
+        _config['step']
+    )
+
+    # Number of days in each array and total combinations
+    ds = len(et_departures)
+    as_ = len(et_arrivals)
+    total = ds * as_
+
+    print(f'Departure days: {ds}')
+    print(f'Arrival days: {as_}')
+    print(f'Total combinations: {total}')
+
+    # Create empty array for C3, v infinity and tof
+    C3_shorts = np.zeros((as_, ds))
+    C3_longs = np.zeros((as_, ds))
+    v_inf_shorts = np.zeros((as_, ds))
+    v_inf_longs = np.zeros((as_, ds))
+    tofs = np.zeros((as_, ds))
+
+    # Create arrays for indexing meshgrid
+    x = np.arange(ds)
+    y = np.arange(as_)
+
+    for na in y:
+        for nd in x:
+            # state of planet0 at departure
+            state_depart = st.get_ephemeris(_config['planet0'], [et_departures[nd]], _config['frame'],
+                                            _config['observer'])[0]
+            # state of planet1 at arrival
+            state_arrive = st.get_ephemeris(_config['planet1'], [et_arrivals[na]], _config['frame'],
+                                            _config['observer'])[0]
+            # calculate flight time
+            tof = et_arrivals[na] - et_departures[nd]
+
+            try:
+                v_sc_depart_short, v_sc_arrive_short = lamberts_universal_variables(
+                    state_depart[:3], state_arrive[:3], tof, tm=1, mu=_config['mu']
+                )
+            except:
+                v_sc_depart_short = np.array([1000, 1000, 1000])  # above the cutoff value so not considered
+                v_sc_arrive_short = np.array([1000, 1000, 1000])
+
+            try:
+                v_sc_depart_long, v_sc_arrive_long = lamberts_universal_variables(
+                    state_depart[:3], state_arrive[:3], tof, tm=-1, mu=_config['mu']
+                )
+            except:
+                v_sc_depart_long = np.array([1000, 1000, 1000])
+                v_sc_arrive_long = np.array([1000, 1000, 1000])
+
+            # Compute C3 values departing
+            C3_short = norm(v_sc_depart_short - state_depart[3:]) ** 2
+            C3_long = norm(v_sc_depart_long - state_depart[3:]) ** 2
+
+            # check for unreasonable values
+            if C3_short > cutoff_c3: C3_short = cutoff_c3
+            if C3_long > cutoff_c3: C3_long = cutoff_c3
+
+            # Compute v infinity values at arrival
+            v_inf_short = norm(v_sc_arrive_short - state_arrive[3:]) ** 2
+            v_inf_long = norm(v_sc_arrive_long - state_arrive[3:]) ** 2
+
+            # check for unreasonable values
+            if v_inf_short > cutoff_v: v_inf_short = cutoff_v
+            if v_inf_long > cutoff_v: v_inf_long = cutoff_v
+
+            # Add values to corresponding array
+            C3_shorts[na, nd] = C3_short
+            C3_longs[na, nd] = C3_long
+            v_inf_shorts[na, nd] = v_inf_short
+            v_inf_longs[na, nd] = v_inf_long
+            tofs[na, nd] = tof
+
+        print(f'{na}    ,   {nd}')
+
+    tofs /= (3600*24)
+
+    # Total delta v
+    dv_shorts = v_inf_shorts + np.sqrt(C3_shorts)
+    dv_longs = v_inf_longs + np.sqrt(C3_longs)
+
+    # Create levels arrays
+    if _config['c3_levels'] is None:
+        _config['c3_levels'] = np.arange(10, 50, 2)
+    if _config['vinf_levels'] is None:
+        _config['vinf_levels'] = np.arange(0, 15, 1)
+    if _config['tof_levels'] is None:
+        _config['tof_levels'] = np.arange(100, 500, 20)
+    if _config['dv_levels'] is None:
+        _config['dv_levels'] = np.arange(3, 20, 0.5)
+
+    lw = _config['lw']
+    fig, ax = plt.subplots(figsize=_config['figsize'])
+    c0 = ax.contour(C3_shorts, levels=_config['c3_levels'], colors='m', linewidths=lw)
+    c1 = ax.contour(C3_longs, levels=_config['c3_levels'], colors='m', linewidths=lw)
+    c2 = ax.contour(v_inf_shorts, levels=_config['vinf_levels'], colors='deepskyblue', linewidths=lw)
+    c3 = ax.contour(v_inf_longs, levels=_config['vinf_levels'], colors='deepskyblue', linewidths=lw)
+    c4 = ax.contour(tofs, levels=_config['tof_levels'], colors='white', linewidths=lw*0.5)
+
+    plt.clabel(c0, fmt='%i')
+    plt.clabel(c1, fmt='%i')
+    plt.clabel(c2, fmt='%i')
+    plt.clabel(c3, fmt='%i')
+    plt.clabel(c4, fmt='%i')
+
+    plt.plot([0], [0], 'm')
+    plt.plot([0], [0], 'c')
+    plt.plot([0], [0], 'w')
+
+    plt.legend(
+        ['C3', 'v_inf', 'Tof (days)'], bbox_to_anchor=(1.005, 1.01), fontsize=10
+    )
+    ax.set_title(_config['title'], fontsize=_config['fontsize']*1.5)
+    ax.set_ylabel(f"Arrival (days past {_config['arrival0']})", fontsize=_config['fontsize'])
+    ax.set_xlabel(f"Departure (days past {_config['departure0']})", fontsize=_config['fontsize'])
+
+    if _config['show']:
+        plt.show()
+
+    if _config['filename']:
+        plt.savefig(_config['filename'], dpi=_config['dpi'])
+
+    plt.close()
+
+    fig, ax = plt.subplots(figsize=_config['figsize'])
+    c0 = ax.contour(
+        dv_shorts, levels=_config['dv_levels'], cmap=_config['dv_cmap'], linewidths=lw
+    )
+    c1 = ax.contour(
+        dv_longs, levels=_config['dv_levels'], cmap=_config['dv_cmap'], linewidths=lw
+    )
+    c2 = ax.contour(
+        tofs, levels=_config['tof_levels'], colors='c', linewidths=lw*0.5
+    )
+
+    plt.clabel(c0, fmt='%.1f')
+    plt.clabel(c1, fmt='%.1f')
+    plt.clabel(c2, fmt='%i')
+
+    ax.set_title(_config['title_dv'], fontsize=_config['fontsize']*1.5)
+    ax.set_ylabel(f"Arrival (days past {_config['arrival0']}", fontsize=_config['fontsize'])
+    ax.set_xlabel(f"Departure (days past {_config['departure0']}", fontsize=_config['fontsize'])
+
+    if _config['show']:
+        plt.show()
+
+    if _config['filename_dv']:
+        plt.savefig(_config['filename_dv'], dpi=_config['dpi'])

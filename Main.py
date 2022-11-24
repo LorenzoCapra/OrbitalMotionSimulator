@@ -17,7 +17,7 @@ if __name__ == '__main__':
     c2 = [cb['radius']+3000, 0.3, 20, 0.0, 15.0, 40.0]
 
     # 2 day tspan
-    tspan = 24*3600.0*2
+    tspan = 24*3600.0*5
 
     # 100 seconds dt
     dt = 100.0
@@ -32,6 +32,6 @@ if __name__ == '__main__':
 
     Tools.plot_n_orbits([op0.rs, op1.rs, op2.rs], labels=['ISS', 'GEO', 'Random'], show_plot=True)
 
-    op0.plot_kep(show_plot=True)
-    op1.plot_kep(show_plot=True)
-    op2.plot_kep(show_plot=True)
+    #op0.plot_kep(show_plot=True)
+    #op1.plot_kep(show_plot=True)
+    #op2.plot_kep(show_plot=True)
