@@ -1037,3 +1037,102 @@ def interplanetary_porkchop(config):
 
     if _config['filename_dv']:
         plt.savefig(_config['filename_dv'], dpi=_config['dpi'])
+
+
+def plot_states( ets, states, args ):
+	_args = {
+		'figsize'      : ( 16, 8 ),
+		'colors'       : COLORS[ : ],
+		'dist_unit'    : 'km',
+		'time_unit'    : 'seconds',
+		'lw'           : 2.5,
+		'r_hlines'     : [],
+		'v_hlines'     : [],
+		'hline_lstyles': 'dashed',
+		'title'        : 'Trajectories',
+		'xlim'         : None,
+		'r_ylim'       : None,
+		'v_ylim'       : None,
+		'legend'       : True,
+		'show'         : False,
+		'filename'     : False,
+		'dpi'          : 300,
+	}
+	for key in args.keys():
+		_args[ key ] = args[ key ]
+
+	fig, ( ax0, ax1 ) = plt.subplots( 2, 1,
+		figsize = _args[ 'figsize' ] )
+
+	_args[ 'xlabel' ]     = time_handler[ _args[ 'time_unit' ] ][ 'xlabel' ]
+	_args[ 'time_coeff' ] = time_handler[ _args[ 'time_unit' ] ][ 'coeff' ]
+	ts     = ets[:] - ets[0]
+	ts    /= _args[ 'time_coeff' ]
+	rnorms = np.linalg.norm( states[ :, :3 ], axis = 1 )
+	vnorms = np.linalg.norm( states[ :, 3: ], axis = 1 )
+
+	if _args[ 'xlim' ] is None:
+		_args[ 'xlim' ] = [ 0, ts[ -1 ] ]
+
+	if _args[ 'r_ylim' ] is None:
+		_args[ 'r_ylim' ] = [ states[ :, :3 ].min(), rnorms.max() ]
+
+	if _args[ 'v_ylim' ] is None:
+		_args[ 'v_ylim' ] = [ states[ :, 3: ].min(), vnorms.max() ]
+
+	''' Positions '''
+	ax0.plot( ts, states[ :, 0 ], 'r', label = r'$r_x$',
+		linewidth = _args[ 'lw' ] )
+	ax0.plot( ts, states[ :, 1 ], 'g', label = r'$r_y$',
+		linewidth = _args[ 'lw' ] )
+	ax0.plot( ts, states[ :, 2 ], 'b', label = r'$r_z$',
+		linewidth = _args[ 'lw' ] )
+	ax0.plot( ts, rnorms        , 'm', label = r'$Norms$',
+		linewidth = _args[ 'lw' ] )
+
+	ax0.grid( linestyle = 'dotted' )
+	ax0.set_xlim( _args[ 'xlim'   ] )
+	ax0.set_ylim( _args[ 'r_ylim' ] )
+	ax0.set_ylabel( r'Position $(km)$')
+
+	for hline in _args[ 'r_hlines' ]:
+		ax0.hlines( hline[ 'val' ], ts[ 0 ], ts[ -1 ],
+			color     = hline[ 'color' ],
+			linestyle = _args[ 'hline_lstyles' ] )
+
+	''' Velocities '''
+	ax1.plot( ts, states[ :, 3 ], 'r', label = r'$r_x$',
+		linewidth = _args[ 'lw' ] )
+	ax1.plot( ts, states[ :, 4 ], 'g', label = r'$r_y$',
+		linewidth = _args[ 'lw' ] )
+	ax1.plot( ts, states[ :, 5 ], 'b', label = r'$r_z$',
+		linewidth = _args[ 'lw' ] )
+	ax1.plot( ts, vnorms        , 'm', label = r'$Norms$',
+		linewidth = _args[ 'lw' ] )
+
+	ax1.grid( linestyle = 'dotted' )
+	ax1.set_xlim( _args[ 'xlim'   ] )
+	ax1.set_ylim( _args[ 'v_ylim' ] )
+	ax1.set_ylabel( r'Velocity $(\dfrac{km}{s})$' )
+	ax1.set_xlabel( _args[ 'xlabel' ] )
+
+	for hline in _args[ 'v_hlines' ]:
+		ax1.hlines( hline[ 'val' ], ts[ 0 ], ts[ -1 ],
+			color     = hline[ 'color' ],
+			linestyle = _args[ 'hline_lstyles' ] )
+
+	plt.suptitle( _args[ 'title' ] )
+	plt.tight_layout()
+
+	if _args[ 'legend' ]:
+		ax0.legend()
+		ax1.legend()
+
+	if _args[ 'filename' ]:
+		plt.savefig( _args[ 'filename' ], dpi = _args[ 'dpi' ] )
+		print( 'Saved', _args[ 'filename' ] )
+
+	if _args[ 'show' ]:
+		plt.show()
+
+	plt.close()

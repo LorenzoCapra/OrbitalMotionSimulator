@@ -85,7 +85,8 @@ class OrbitPropagator:
 
         # Define dictionary to map internal methods:
         self.stop_condition_map = {'max_alt': self.check_max_alt, 'min_alt': self.check_min_alt,
-                                   'escape_velocity': self.check_escape_velocity}
+                                   'escape_velocity': self.check_escape_velocity,
+                                   'enter_SOI': self.check_enter_SOI, 'exit_SOI': self.check_exit_SOI}
         # Create stop conditions function list with de-orbit always checked:
         self.stop_condition_functions = [self.check_deorbit]
         # Fill in the rest of stop conditions:
@@ -147,6 +148,9 @@ class OrbitPropagator:
         self.rs = self.ys[:, :3]
         self.vs = self.ys[:, 3:]
         self.alts = self.alts[:self.steps]
+
+        self.states = self.ys
+        self.ets = self.ts
 
     def dynamics(self, t, y):
         if self.perts['thrust']:
@@ -251,6 +255,12 @@ class OrbitPropagator:
             print('Spacecraft reached escape velocity after %.1f seconds' % self.ts[self.steps])
             return False
         return True
+
+    def check_enter_SOI(self):
+        pass
+
+    def check_exit_SOI(self):
+        pass
 
     def check_stop_condition(self):
         # for each stop condition in the dictionary:
