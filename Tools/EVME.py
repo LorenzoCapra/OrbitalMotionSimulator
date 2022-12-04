@@ -1,6 +1,6 @@
 import spiceypy as spice
-import planetary_data as pd
-from ITVIM import ITVIM
+from Tools import planetary_data as pd
+from Tools.ITVIM import ITVIM
 
 def calc_EVME_1963():
 	'''
@@ -9,8 +9,8 @@ def calc_EVME_1963():
 	Example comes from Richard Battin's book
 	called "Astronautical Guidance"
 	'''
-	spice.furnsh( 'Data/spice/lsk/naif0012.tls' )
-	spice.furnsh( 'Data/spice/spk/de432s.bsp' )
+	spice.furnsh('Data/spice/lsk/naif0012.tls')
+	spice.furnsh('Data/spice/spk/de432s.bsp')
 
 	sequence = [
 		{

@@ -1,5 +1,4 @@
-import planetary_data as pd
-import Tools
+from Tools import Tools, planetary_data as pd
 from OrbitPropagator import OrbitPropagator, perturbations
 
 # plt.style.use('dark_background')

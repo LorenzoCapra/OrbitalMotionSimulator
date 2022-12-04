@@ -6,8 +6,7 @@ import datetime
 import os
 import spiceypy as spice
 
-import planetary_data as pd
-import SpiceTools as st
+from Tools import SpiceTools as st, planetary_data as pd
 
 d2r = np.pi/180.0
 r2d = 180.0/np.pi
@@ -35,12 +34,12 @@ COLORS = [
 
 COASTLINES_COORDINATES_FILE = os.path.join(
     os.path.dirname( os.path.realpath( __file__ ) ),
-    os.path.join( 'Data', 'coastlines.csv' )
+    os.path.join('../Data', 'coastlines.csv')
     )
 
 EARTH_SURFACE_IMAGE = os.path.join(
     os.path.dirname( os.path.realpath( __file__ ) ),
-    os.path.join( 'Data', 'earth_surface.png' )
+    os.path.join('../Data', 'earth_surface.png')
     )
 
 SURFACE_BODY_MAP = {
@@ -53,7 +52,7 @@ CITY_COLORS = [
 
 WORLD_CITIES_FILE = os.path.join(
     os.path.dirname( os.path.realpath( __file__ ) ),
-    os.path.join( 'Data', 'world_cities.csv' )
+    os.path.join('../Data', 'world_cities.csv')
     )
 
 city_list0 = [

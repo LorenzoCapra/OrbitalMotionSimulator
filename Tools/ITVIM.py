@@ -2,9 +2,7 @@ import spiceypy           as spice
 import numpy              as np
 from numpy.linalg import norm
 
-import planetary_data     as pd
-import Tools
-import SpiceTools as st
+from Tools import Tools, SpiceTools as st, planetary_data as pd
 from OrbitPropagator import OrbitPropagator
 
 

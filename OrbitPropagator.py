@@ -5,10 +5,8 @@ import matplotlib.pyplot as plt
 from scipy.integrate import ode
 import spiceypy as spice
 
-import planetary_data as pd
-from Tools import calc_atmospheric_density, kep2car, esc_v, state2period
-import SpiceTools
-
+from Tools.Tools import calc_atmospheric_density, kep2car, esc_v, state2period
+from Tools import SpiceTools, planetary_data as pd
 
 g0 = 9.81
 km2AU = 149598073

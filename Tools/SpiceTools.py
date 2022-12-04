@@ -2,14 +2,13 @@ import spiceypy as spice
 import numpy as np
 import os
 
-import planetary_data as pd
-
+from Tools import planetary_data as pd
 
 r2d = 180 / np.pi
 
 base_dir = os.path.join(
     os.path.dirname( os.path.realpath( __file__ ) ),
-    os.path.join( '..', '..', 'Data', 'spice' )
+    os.path.join('../..', '..', 'Data', 'spice')
     )
 
 leapseconds_kernel = os.path.join( base_dir, 'lsk/naif0012.tls' )
