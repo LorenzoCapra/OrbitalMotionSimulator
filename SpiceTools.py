@@ -8,9 +8,9 @@ import planetary_data as pd
 r2d = 180 / np.pi
 
 base_dir = os.path.join(
-	os.path.dirname( os.path.realpath( __file__ ) ),
-	os.path.join( '..', '..', 'Data', 'spice' )
-	)
+    os.path.dirname( os.path.realpath( __file__ ) ),
+    os.path.join( '..', '..', 'Data', 'spice' )
+    )
 
 leapseconds_kernel = os.path.join( base_dir, 'lsk/naif0012.tls' )
 de432              = os.path.join( base_dir, 'spk/de432s.bsp'   )
@@ -69,6 +69,57 @@ def tc2array(tcs, steps):
 # Get ephemeris data from a given time array
 def get_ephemeris(target, times, frame, observer):
     return np.array(spice.spkezr(target, times, frame, 'NONE', observer)[0])
+
+
+def calc_ephemeris( target, ets, frame, observer ):
+    '''
+    Convenience wrapper for spkezr and spkgeo
+    '''
+
+    if type( target ) == str:
+        return np.array( spice.spkezr( target, ets, frame, 'NONE', observer )[ 0 ] )
+
+    else:
+        n_states = len( ets )
+        states   = np.zeros( ( n_states, 6 ) )
+        for n in range( n_states ):
+            states[ n ] = spice.spkgeo( target, ets[ n ], frame, observer )[ 0 ]
+        return states
+
+def write_bsp( ets, states, args={} ):
+    '''
+    Write or append to a BSP / SPK kernel from a NumPy array
+    '''
+    _args = {
+        'bsp_fn'   : 'traj.bsp',
+        'spice_id' : -999,
+        'center'   : 399,
+        'frame'    : 'J2000',
+        'degree'   : 5,
+        'verbose'  : True,
+        'new'      : True,
+        'comments' : '',
+    }
+    for key in args.keys():
+        _args[ key ] = args[ key ]
+
+    if _args[ 'new' ]:
+        handle = spice.spkopn( _args[ 'bsp_fn' ],
+            'SPK_file', len( _args[ 'comments' ] ) )
+        action = 'Wrote'
+    else:
+        handle = spice.spkopa( _args[ 'bsp_fn' ] )
+        action = 'Updated'
+
+    spice.spkw09( handle, _args[ 'spice_id' ], _args[ 'center' ],
+        _args[ 'frame'  ], ets[ 0 ], ets[ -1 ], '0',
+        _args[ 'degree' ], len( ets ),
+        states.tolist(), ets.tolist() )
+
+    spice.spkcls( handle )
+
+    if _args[ 'verbose' ]:
+        print( f'{action} { _args[ "bsp_fn" ] }.' )
 
 
 # Compute keplerian elements from the state vector:

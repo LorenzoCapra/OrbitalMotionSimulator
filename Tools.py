@@ -15,98 +15,98 @@ km2AU = 149598073.
 sec2day = 1/24/3600
 
 time_handler = {
-	'seconds': { 'coeff': 1.0,        'xlabel': 'Time (seconds)' },
-	'hours'  : { 'coeff': 3600.0,     'xlabel': 'Time (hours)'   },
-	'days'   : { 'coeff': 86400.0,    'xlabel': 'Time (days)'    },
-	'years'  : { 'coeff': 31536000.0, 'xlabel': 'Time (years)'   }
+    'seconds': { 'coeff': 1.0,        'xlabel': 'Time (seconds)' },
+    'hours'  : { 'coeff': 3600.0,     'xlabel': 'Time (hours)'   },
+    'days'   : { 'coeff': 86400.0,    'xlabel': 'Time (days)'    },
+    'years'  : { 'coeff': 31536000.0, 'xlabel': 'Time (years)'   }
 }
 
 dist_handler = {
-	'km'    : 1.0,
-	'ER'    : 1 / 6378.0,
-	'JR'    : 1 / 71490.0,
-	'AU'    : 6.68459e-9,
-	r'$\dfrac{km}{s}$': 1.0
+    'km'    : 1.0,
+    'ER'    : 1 / 6378.0,
+    'JR'    : 1 / 71490.0,
+    'AU'    : 6.68459e-9,
+    r'$\dfrac{km}{s}$': 1.0
 }
 
 COLORS = [
-	'm', 'deeppink', 'chartreuse', 'w', 'springgreen', 'peachpuff',
-	'white', 'lightpink', 'royalblue', 'lime', 'aqua' ] * 100
+    'm', 'deeppink', 'chartreuse', 'w', 'springgreen', 'peachpuff',
+    'white', 'lightpink', 'royalblue', 'lime', 'aqua' ] * 100
 
 COASTLINES_COORDINATES_FILE = os.path.join(
-	os.path.dirname( os.path.realpath( __file__ ) ),
-	os.path.join( 'Data', 'coastlines.csv' )
-	)
+    os.path.dirname( os.path.realpath( __file__ ) ),
+    os.path.join( 'Data', 'coastlines.csv' )
+    )
 
 EARTH_SURFACE_IMAGE = os.path.join(
-	os.path.dirname( os.path.realpath( __file__ ) ),
-	os.path.join( 'Data', 'earth_surface.png' )
-	)
+    os.path.dirname( os.path.realpath( __file__ ) ),
+    os.path.join( 'Data', 'earth_surface.png' )
+    )
 
 SURFACE_BODY_MAP = {
-	'earth'  : EARTH_SURFACE_IMAGE,
+    'earth'  : EARTH_SURFACE_IMAGE,
 }
 
 CITY_COLORS = [
-	'w', 'deeppink', 'chartreuse', 'magenta', 'springgreen', 'peachpuff',
-	'white', 'lightpink', 'royalblue', 'lime', 'aqua' ] * 100
+    'w', 'deeppink', 'chartreuse', 'magenta', 'springgreen', 'peachpuff',
+    'white', 'lightpink', 'royalblue', 'lime', 'aqua' ] * 100
 
 WORLD_CITIES_FILE = os.path.join(
-	os.path.dirname( os.path.realpath( __file__ ) ),
-	os.path.join( 'Data', 'world_cities.csv' )
-	)
+    os.path.dirname( os.path.realpath( __file__ ) ),
+    os.path.join( 'Data', 'world_cities.csv' )
+    )
 
 city_list0 = [
-	 'Seattle', 'Pasadena',                 # US
-	 'New York', 'San Luis Obispo',
-	 'Phoenix', 'Cape Canaveral',
-	 'Mexico City', 'Villahermosa',         # Mexico
-	 'New Delhi', 'Mumbai',                 # India
-	 'Tirunelveli', 'Surat', 'Chennai',
-	 'Olney', 'Norwich',                    # England
-	 'Ponce',                               # Puerto Rico
-	 'Berlin',                              # Germany
-	 'Lyon',                                # France
-	 'Vienna',                              # Austria
-	 'Madrid', 'Sevilla', 'Barcelona',      # Spain
-	 'Moscow',                              # Russia
-	 'Rome', 'Cortemaggiore',               # Italy
-	 'Aalborg',                             # Denmark
-	 'Sao Paulo',                           # Brazil
-	 'Luxembourg City', 'Esch-sur-Alzette', # Luxembourg
-	 'Toronto',                             # Canada
-	 'Tokyo',                               # Japan
-	 'Istanbul',                            # Turkey
-	 'Jihlava',                             # Czech Republic
-	 'Warsaw',                              # Poland
-	 'Zagreb',                              # Croatia
-	 'Sydney', 'Adelaide',                  # Australia
-	 'Dubai',                               # UAE
-	 'Port Louis',                          # Mauritius
-	 'Casablanca',                          # Morocco
-	 'Khartoum',                            # Sudan
-	 'Tunis',                               # Tunisia
-	 'Buenos Aires',                        # Argentina
-	 'Cape Town',                           # South Africa
-	 'Bucharest',                           # Romania
-	 'Bogota',                              # Colombia
-	 'Quito',                               # Ecuador
-	 'Noordwijk',                           # Netherlands
-	 'San Jose',                            # Costa Rica
-	 'Stockholm',                           # Sweden
-	 'Santiago',                            # Chile
-	 'Jakarta',                             # Indonesia
-	 'Antwerp',                             # Belgium
-	 'Geneva',                              # Switzerland
-	 'Manila',                              # Phillipines
-	 'Porto', 'Ponta Delgada',              # Portugal
-	 'Budapest',                            # Hungary
-	 'Panama City',                         # Panama
-	 'Cairo',                               # Egypt
-	 'Seoul',                               # South Korea
-	 'Broom Bridge',                        # Ireland
-	 'Lima',                                # Peru
-	 'Akure'                                # Nigeria
+     'Seattle', 'Pasadena',                 # US
+     'New York', 'San Luis Obispo',
+     'Phoenix', 'Cape Canaveral',
+     'Mexico City', 'Villahermosa',         # Mexico
+     'New Delhi', 'Mumbai',                 # India
+     'Tirunelveli', 'Surat', 'Chennai',
+     'Olney', 'Norwich',                    # England
+     'Ponce',                               # Puerto Rico
+     'Berlin',                              # Germany
+     'Lyon',                                # France
+     'Vienna',                              # Austria
+     'Madrid', 'Sevilla', 'Barcelona',      # Spain
+     'Moscow',                              # Russia
+     'Rome', 'Cortemaggiore',               # Italy
+     'Aalborg',                             # Denmark
+     'Sao Paulo',                           # Brazil
+     'Luxembourg City', 'Esch-sur-Alzette', # Luxembourg
+     'Toronto',                             # Canada
+     'Tokyo',                               # Japan
+     'Istanbul',                            # Turkey
+     'Jihlava',                             # Czech Republic
+     'Warsaw',                              # Poland
+     'Zagreb',                              # Croatia
+     'Sydney', 'Adelaide',                  # Australia
+     'Dubai',                               # UAE
+     'Port Louis',                          # Mauritius
+     'Casablanca',                          # Morocco
+     'Khartoum',                            # Sudan
+     'Tunis',                               # Tunisia
+     'Buenos Aires',                        # Argentina
+     'Cape Town',                           # South Africa
+     'Bucharest',                           # Romania
+     'Bogota',                              # Colombia
+     'Quito',                               # Ecuador
+     'Noordwijk',                           # Netherlands
+     'San Jose',                            # Costa Rica
+     'Stockholm',                           # Sweden
+     'Santiago',                            # Chile
+     'Jakarta',                             # Indonesia
+     'Antwerp',                             # Belgium
+     'Geneva',                              # Switzerland
+     'Manila',                              # Phillipines
+     'Porto', 'Ponta Delgada',              # Portugal
+     'Budapest',                            # Hungary
+     'Panama City',                         # Panama
+     'Cairo',                               # Egypt
+     'Seoul',                               # South Korea
+     'Broom Bridge',                        # Ireland
+     'Lima',                                # Peru
+     'Akure'                                # Nigeria
 ]
 
 
@@ -588,7 +588,7 @@ def lamberts_universal_variables(r0, r1, deltat, tm=1, mu=pd.earth['mu'], tol=1e
     gamma = np.dot(r0, r1)/r0_norm/r1_norm
 
     # Calculate beta parameter:
-    beta = tm*sqrt(1-gamma**2)
+    # beta = tm*sqrt(1-gamma**2)
 
     # Calculate A parameter:
     A = tm*sqrt(r0_norm*r1_norm*(1+gamma))
@@ -735,113 +735,113 @@ def groundtracks(coords, labels=None, city_names=None, cs=['w', 'C3', 'b', 'g', 
         plt.show()
 
 def plot_groundtracks( coords, args ):
-	_args = {
-		'figsize'    : ( 18, 9 ),
-		'markersize' : 1,
-		'labels'     : [ '' ] * len( coords ),
-		'city_names' : city_list0,
-		'colors'     : [ 'c', 'r', 'b', 'g', 'w', 'y' ],
-		'grid'       : True,
-		'title'      : 'Groundtracks',
-		'show'       : True,
-		'filename'   : False,
-		'dpi'        : 300,
-		'city_colors': CITY_COLORS[ : ],
-		'city_msize' : 3,
-		'city_fsize' : 10,
-		'legend'     : True,
-		'surface_image': True,
-		'surface_body' : 'earth',
-		'plot_coastlines': False
-	}
-	for key in args.keys():
-		_args[ key ] = args[ key ]
+    _args = {
+        'figsize'    : ( 18, 9 ),
+        'markersize' : 1,
+        'labels'     : [ '' ] * len( coords ),
+        'city_names' : city_list0,
+        'colors'     : [ 'c', 'r', 'b', 'g', 'w', 'y' ],
+        'grid'       : True,
+        'title'      : 'Groundtracks',
+        'show'       : True,
+        'filename'   : False,
+        'dpi'        : 300,
+        'city_colors': CITY_COLORS[ : ],
+        'city_msize' : 3,
+        'city_fsize' : 10,
+        'legend'     : True,
+        'surface_image': True,
+        'surface_body' : 'earth',
+        'plot_coastlines': False
+    }
+    for key in args.keys():
+        _args[ key ] = args[ key ]
 
-	plt.figure( figsize = _args[ 'figsize' ] )
+    plt.figure( figsize = _args[ 'figsize' ] )
 
-	if _args[ 'surface_image' ]:
-		plt.imshow(
-			plt.imread( SURFACE_BODY_MAP[ _args[ 'surface_body' ] ] ),
-			extent = [ -180, 180, -90, 90 ] )
+    if _args[ 'surface_image' ]:
+        plt.imshow(
+            plt.imread( SURFACE_BODY_MAP[ _args[ 'surface_body' ] ] ),
+            extent = [ -180, 180, -90, 90 ] )
 
-	if _args[ 'plot_coastlines' ]:
-		coast_coords = np.genfromtxt( COASTLINES_COORDINATES_FILE,
-			delimiter = ',' )
+    if _args[ 'plot_coastlines' ]:
+        coast_coords = np.genfromtxt( COASTLINES_COORDINATES_FILE,
+            delimiter = ',' )
 
-		plt.plot( coast_coords[ :, 0 ], coast_coords[ :, 1 ], 'mo',
-			markersize = 0.3 )
+        plt.plot( coast_coords[ :, 0 ], coast_coords[ :, 1 ], 'mo',
+            markersize = 0.3 )
 
-	for n in range( len( coords ) ):
-		plt.plot( [ coords[ n ][ 0, 1 ] ], [ coords[ n ][ 0, 2 ] ], 'o',
-			color = _args[ 'colors' ][ n ],
-			label = _args[ 'labels' ][ n ] )
-		plt.plot( coords[ n ][ 1:, 1 ], coords[ n ][ 1:, 2 ], 'o',
-			color = _args[ 'colors' ][ n ],
-			markersize = _args[ 'markersize' ] )
+    for n in range( len( coords ) ):
+        plt.plot( [ coords[ n ][ 0, 1 ] ], [ coords[ n ][ 0, 2 ] ], 'o',
+            color = _args[ 'colors' ][ n ],
+            label = _args[ 'labels' ][ n ] )
+        plt.plot( coords[ n ][ 1:, 1 ], coords[ n ][ 1:, 2 ], 'o',
+            color = _args[ 'colors' ][ n ],
+            markersize = _args[ 'markersize' ] )
 
-	# TODO save this as a .json
-	cities = city_dict()
-	n      = 0
+    # TODO save this as a .json
+    cities = city_dict()
+    n      = 0
 
-	for city in _args[ 'city_names' ]:
-		coords = cities[ city ]
-		plt.plot( [ coords[ 1 ] ], [ coords[ 0 ] ], 'o',
-			color      = _args[ 'city_colors' ][ n%len(CITY_COLORS) ],
-			markersize = _args[ 'city_msize' ] )
+    for city in _args[ 'city_names' ]:
+        coords = cities[ city ]
+        plt.plot( [ coords[ 1 ] ], [ coords[ 0 ] ], 'o',
+            color      = _args[ 'city_colors' ][ n%len(CITY_COLORS) ],
+            markersize = _args[ 'city_msize' ] )
 
-		if n % 2 == 0:
-			xytext = ( 0, 2 )
-		else:
-			xytext = ( 0, -8 )
+        if n % 2 == 0:
+            xytext = ( 0, 2 )
+        else:
+            xytext = ( 0, -8 )
 
-		plt.annotate( city, [ coords[ 1 ], coords[ 0 ] ],
-					  textcoords = 'offset points', xytext = xytext,
-					  ha = 'center', color = _args[ 'city_colors' ][ n%len(CITY_COLORS) ],
-					  fontsize = _args[ 'city_fsize' ]
-					)
-		n += 1
+        plt.annotate( city, [ coords[ 1 ], coords[ 0 ] ],
+                      textcoords = 'offset points', xytext = xytext,
+                      ha = 'center', color = _args[ 'city_colors' ][ n%len(CITY_COLORS) ],
+                      fontsize = _args[ 'city_fsize' ]
+                    )
+        n += 1
 
-	plt.xlim( [ -180, 180 ] )
-	plt.ylim( [ -90, 90 ] )
-	plt.xticks( range( -180, 200, 20 ) )
-	plt.yticks( range( -90, 100, 10 ) )
-	plt.xlabel( r'Longitude (degrees $^\circ$)' )
-	plt.ylabel( r'Latitude (degrees $^\circ$)' )
-	plt.tight_layout()
+    plt.xlim( [ -180, 180 ] )
+    plt.ylim( [ -90, 90 ] )
+    plt.xticks( range( -180, 200, 20 ) )
+    plt.yticks( range( -90, 100, 10 ) )
+    plt.xlabel( r'Longitude (degrees $^\circ$)' )
+    plt.ylabel( r'Latitude (degrees $^\circ$)' )
+    plt.tight_layout()
 
-	if _args[ 'legend' ]:
-		plt.legend()
+    if _args[ 'legend' ]:
+        plt.legend()
 
-	if _args[ 'grid' ]:
-		plt.grid( linestyle = 'dotted' )
+    if _args[ 'grid' ]:
+        plt.grid( linestyle = 'dotted' )
 
-	if _args[ 'show' ]:
-		plt.show()
+    if _args[ 'show' ]:
+        plt.show()
 
-	if _args[ 'filename' ]:
-		plt.savefig( _args[ 'filename' ], dpi = _args[ 'dpi' ] )
+    if _args[ 'filename' ]:
+        plt.savefig( _args[ 'filename' ], dpi = _args[ 'dpi' ] )
 
 
 
 def city_dict():
-	with open( WORLD_CITIES_FILE, 'r' ) as f:
-		lines = f.readlines()
+    with open( WORLD_CITIES_FILE, 'r' ) as f:
+        lines = f.readlines()
 
-	header = lines[ 0 ]
-	cities = {}
+    header = lines[ 0 ]
+    cities = {}
 
-	for line in lines[ 1: ]:
-		line = line.split(',')
+    for line in lines[ 1: ]:
+        line = line.split(',')
 
-		# create new dictionary for given city
-		try:
-			# city name and lat/long coordinates
-			cities[ line[ 1 ] ] = [ float( line[ 2 ] ), float( line[ 3 ] ) ]
+        # create new dictionary for given city
+        try:
+            # city name and lat/long coordinates
+            cities[ line[ 1 ] ] = [ float( line[ 2 ] ), float( line[ 3 ] ) ]
 
-		except:
-			pass
+        except:
+            pass
 
-	return cities
+    return cities
 
 
 def interplanetary_porkchop(config):
@@ -1040,93 +1040,292 @@ def interplanetary_porkchop(config):
 
 
 def plot_states( ets, states, args ):
+    _args = {
+        'figsize'      : ( 16, 8 ),
+        'colors'       : COLORS[ : ],
+        'dist_unit'    : 'km',
+        'time_unit'    : 'seconds',
+        'lw'           : 2.5,
+        'r_hlines'     : [],
+        'v_hlines'     : [],
+        'hline_lstyles': 'dashed',
+        'title'        : 'Trajectories',
+        'xlim'         : None,
+        'r_ylim'       : None,
+        'v_ylim'       : None,
+        'legend'       : True,
+        'show'         : False,
+        'filename'     : False,
+        'dpi'          : 300,
+    }
+    for key in args.keys():
+        _args[ key ] = args[ key ]
+
+    fig, ( ax0, ax1 ) = plt.subplots( 2, 1,
+        figsize = _args[ 'figsize' ] )
+
+    _args[ 'xlabel' ]     = time_handler[ _args[ 'time_unit' ] ][ 'xlabel' ]
+    _args[ 'time_coeff' ] = time_handler[ _args[ 'time_unit' ] ][ 'coeff' ]
+    ts     = ets[:] - ets[0]
+    ts    /= _args[ 'time_coeff' ]
+    rnorms = np.linalg.norm( states[ :, :3 ], axis = 1 )
+    vnorms = np.linalg.norm( states[ :, 3: ], axis = 1 )
+
+    if _args[ 'xlim' ] is None:
+        _args[ 'xlim' ] = [ 0, ts[ -1 ] ]
+
+    if _args[ 'r_ylim' ] is None:
+        _args[ 'r_ylim' ] = [ states[ :, :3 ].min(), rnorms.max() ]
+
+    if _args[ 'v_ylim' ] is None:
+        _args[ 'v_ylim' ] = [ states[ :, 3: ].min(), vnorms.max() ]
+
+    ''' Positions '''
+    ax0.plot( ts, states[ :, 0 ], 'r', label = r'$r_x$',
+        linewidth = _args[ 'lw' ] )
+    ax0.plot( ts, states[ :, 1 ], 'g', label = r'$r_y$',
+        linewidth = _args[ 'lw' ] )
+    ax0.plot( ts, states[ :, 2 ], 'b', label = r'$r_z$',
+        linewidth = _args[ 'lw' ] )
+    ax0.plot( ts, rnorms        , 'm', label = r'$Norms$',
+        linewidth = _args[ 'lw' ] )
+
+    ax0.grid( linestyle = 'dotted' )
+    ax0.set_xlim( _args[ 'xlim'   ] )
+    ax0.set_ylim( _args[ 'r_ylim' ] )
+    ax0.set_ylabel( r'Position $(km)$')
+
+    for hline in _args[ 'r_hlines' ]:
+        ax0.hlines( hline[ 'val' ], ts[ 0 ], ts[ -1 ],
+            color     = hline[ 'color' ],
+            linestyle = _args[ 'hline_lstyles' ] )
+
+    ''' Velocities '''
+    ax1.plot( ts, states[ :, 3 ], 'r', label = r'$r_x$',
+        linewidth = _args[ 'lw' ] )
+    ax1.plot( ts, states[ :, 4 ], 'g', label = r'$r_y$',
+        linewidth = _args[ 'lw' ] )
+    ax1.plot( ts, states[ :, 5 ], 'b', label = r'$r_z$',
+        linewidth = _args[ 'lw' ] )
+    ax1.plot( ts, vnorms        , 'm', label = r'$Norms$',
+        linewidth = _args[ 'lw' ] )
+
+    ax1.grid( linestyle = 'dotted' )
+    ax1.set_xlim( _args[ 'xlim'   ] )
+    ax1.set_ylim( _args[ 'v_ylim' ] )
+    ax1.set_ylabel( r'Velocity $(\dfrac{km}{s})$' )
+    ax1.set_xlabel( _args[ 'xlabel' ] )
+
+    for hline in _args[ 'v_hlines' ]:
+        ax1.hlines( hline[ 'val' ], ts[ 0 ], ts[ -1 ],
+            color     = hline[ 'color' ],
+            linestyle = _args[ 'hline_lstyles' ] )
+
+    plt.suptitle( _args[ 'title' ] )
+    plt.tight_layout()
+
+    if _args[ 'legend' ]:
+        ax0.legend()
+        ax1.legend()
+
+    if _args[ 'filename' ]:
+        plt.savefig( _args[ 'filename' ], dpi = _args[ 'dpi' ] )
+        print( 'Saved', _args[ 'filename' ] )
+
+    if _args[ 'show' ]:
+        plt.show()
+
+    plt.close()
+
+def state2period(state, coes=True, mu=pd.earth['mu']):
+    if coes:
+        return 2*pi*sqrt(state[0]**3 / mu)
+    else:
+        state_ = st.rv2kep(state)
+        return 2 * pi * sqrt(state_[0] ** 3 / mu)
+
+def vecs2angle( v0, v1, deg = True ):
+    '''
+    Calculate angle between 2 vectors
+    '''
+    angle = acos( np.dot( v0, v1 ) / norm( v0 ) / norm( v1 ) )
+    if deg:
+        angle *= r2d
+    return angle
+
+def calc_close_approach( turn_angle, v_inf, mu = pd.sun[ 'mu' ] ):
+	'''
+	Calculate periapsis distance in flyby trajectory
+	'''
+	return mu * ( 1 / sin( turn_angle ) - 1 ) / v_inf ** 2
+
+def calc_vinfinity( tof, args ):
+
+	r1_planet1 = spice.spkgps( args[ 'planet1_ID' ],
+		args[ 'et0' ] + tof, args[ 'frame' ], args[ 'center_ID' ] )[ 0 ]
+
+	v0_sc_depart, v1_sc_arrive = lamberts_universal_variables(
+		args[ 'state0_planet0' ][ :3 ], r1_planet1, tof, mu=args[ 'mu' ], tm=args[ 'tm' ] )
+
+	vinf = norm( v0_sc_depart - args[ 'state0_planet0' ][ 3: ] )
+	return args[ 'vinf' ] - vinf
+
+def vinfinity_match( planet0, planet1, v0_sc, et0, tof0, args={} ):
+	'''
+	Given an incoming v-infinity vector to planet0, calculate the
+	outgoing v-infinity vector that will arrive at planet1 after
+	time of flight (tof) where the incoming and outgoing v-infinity
+	vectors at planet0 have equal magnitude
+	'''
 	_args = {
-		'figsize'      : ( 16, 8 ),
-		'colors'       : COLORS[ : ],
-		'dist_unit'    : 'km',
-		'time_unit'    : 'seconds',
-		'lw'           : 2.5,
-		'r_hlines'     : [],
-		'v_hlines'     : [],
-		'hline_lstyles': 'dashed',
-		'title'        : 'Trajectories',
-		'xlim'         : None,
-		'r_ylim'       : None,
-		'v_ylim'       : None,
-		'legend'       : True,
-		'show'         : False,
-		'filename'     : False,
-		'dpi'          : 300,
+		'et0'       : et0,
+		'planet1_ID': planet1,
+		'frame'     : 'ECLIPJ2000',
+		'center_ID' : 0,
+		'mu'        : pd.sun[ 'mu' ],
+		'tm'        : 1,
+		'diff_step' : 1e-3,
+		'tol'       : 1e-4
 	}
 	for key in args.keys():
 		_args[ key ] = args[ key ]
 
-	fig, ( ax0, ax1 ) = plt.subplots( 2, 1,
-		figsize = _args[ 'figsize' ] )
+	_args[ 'state0_planet0' ] = spice.spkgeo( planet0, et0,
+		_args[ 'frame' ], _args[ 'center_ID' ] )[ 0 ]
 
-	_args[ 'xlabel' ]     = time_handler[ _args[ 'time_unit' ] ][ 'xlabel' ]
-	_args[ 'time_coeff' ] = time_handler[ _args[ 'time_unit' ] ][ 'coeff' ]
-	ts     = ets[:] - ets[0]
-	ts    /= _args[ 'time_coeff' ]
-	rnorms = np.linalg.norm( states[ :, :3 ], axis = 1 )
-	vnorms = np.linalg.norm( states[ :, 3: ], axis = 1 )
+	_args[ 'vinf' ] = norm( v0_sc - _args[ 'state0_planet0' ][ 3: ] )
+
+	tof, steps = newton_root_single_fd(
+		calc_vinfinity, tof0, _args )
+
+	r1_planet1 = spice.spkgps( planet1, et0 + tof,
+		_args[ 'frame' ], _args[ 'center_ID' ] )[ 0 ]
+
+	v0_sc_depart, v1_sc_arrive = lamberts_universal_variables(
+		_args[ 'state0_planet0' ][ :3 ], r1_planet1, tof, mu=_args[ 'mu' ], tm=_args[ 'tm' ] )
+
+	return tof, v0_sc_depart, v1_sc_arrive
+
+def newton_root_single( f, fp, x0, args={} ):
+	'''
+	Calculate root of single variable function
+	using explicit derivative function
+	'''
+	_args = {
+		'tol'        : 1e-10,
+		'max_steps'  : 50
+	}
+	for key in args.keys():
+		_args[ key ] = args[ key ]
+
+	delta_x = f( x0, args ) / fp( x0, args )
+
+	for n in range( _args[ 'max_steps' ] ):
+		x0     -= delta_x
+		delta_x = f( x0, args ) / fp( x0, args )
+
+		if abs( delta_x ) < _args[ 'tol' ]:
+			return x0, n
+
+def newton_root_single_fd( f, x0, args={} ):
+	'''
+	Calculate root of single variable function using
+	finite differences (no explicit derivative function)
+	'''
+	_args = {
+		'tol'        : 1e-10,
+		'max_steps'  : 200,
+		'diff_method': 'central',
+		'diff_step'  : 1e-6
+	}
+	for key in args.keys():
+		_args[ key ] = args[ key ]
+
+	delta_x = f( x0, _args ) /\
+				fdiff_cs( f, x0, _args[ 'diff_step' ], _args )
+
+	for n in range( _args[ 'max_steps' ] ):
+		x0     -= delta_x
+		delta_x = f( x0, _args ) /\
+				  fdiff_cs( f, x0, _args[ 'diff_step' ], _args )
+
+		if abs( delta_x ) < _args[ 'tol' ]:
+			return x0, n
+
+	raise RuntimeError( 'Newton\'s root solver FD single variable did not converge.' )
+
+def fdiff_cs( f, x, dx, args={} ):
+	'''
+	Calculate central finite difference
+	of single variable, scalar valued function
+	'''
+	return ( f( x + dx, args ) - f( x - dx, args ) ) / ( 2 * dx )
+
+def plot_velocities( ets, vs, args ):
+	_args = {
+		'figsize'          : ( 10, 7 ),
+		'dist_unit'        : 'km',
+		'time_unit'        : 'seconds',
+		'hlines'           : [],
+		'hline_lstyles'    : 'dotted',
+		'lw'               : 2,
+		'labelsize'        : 15,
+		'legend_fontsize'  : 20,
+		'legend_framealpha': 0.3,
+		'title'            : 'Trajectories',
+		'xlim'             : None,
+		'ylim'             : None,
+		'legend'           : True,
+		'show'             : False,
+		'filename'         : False,
+		'dpi'              : 300,
+	}
+	for key in args.keys():
+		_args[ key ] = args[ key ]
+
+	fig, ax0 = plt.subplots( 1, 1, figsize = _args[ 'figsize' ] )
+
+	_args[ 'xlabel' ] = time_handler[ _args[ 'time_unit' ] ][ 'xlabel' ]
+	time_coeff        = time_handler[ _args[ 'time_unit' ] ][ 'coeff'  ]
+
+	_ets   = ets.copy() - ets[ 0 ]
+	_ets  /= time_coeff
+	vnorms = np.linalg.norm( vs, axis = 1 )
 
 	if _args[ 'xlim' ] is None:
-		_args[ 'xlim' ] = [ 0, ts[ -1 ] ]
+		_args[ 'xlim' ] = [ 0, _ets[ -1 ] ]
 
-	if _args[ 'r_ylim' ] is None:
-		_args[ 'r_ylim' ] = [ states[ :, :3 ].min(), rnorms.max() ]
+	if _args[ 'ylim' ] is None:
+		_args[ 'ylim' ] = [ vs.min(), vnorms.max() ]
 
-	if _args[ 'v_ylim' ] is None:
-		_args[ 'v_ylim' ] = [ states[ :, 3: ].min(), vnorms.max() ]
-
-	''' Positions '''
-	ax0.plot( ts, states[ :, 0 ], 'r', label = r'$r_x$',
+	ax0.plot( _ets, vs[ :, 0 ], 'r', label = r'$v_x$',
 		linewidth = _args[ 'lw' ] )
-	ax0.plot( ts, states[ :, 1 ], 'g', label = r'$r_y$',
+	ax0.plot( _ets, vs[ :, 1 ], 'g', label = r'$v_y$',
 		linewidth = _args[ 'lw' ] )
-	ax0.plot( ts, states[ :, 2 ], 'b', label = r'$r_z$',
-		linewidth = _args[ 'lw' ] )
-	ax0.plot( ts, rnorms        , 'm', label = r'$Norms$',
+	ax0.plot( _ets, vs[ :, 2 ], 'b', label = r'$v_z$',
+		linewidth = _args[ 'lw' ]  )
+	ax0.plot( _ets, vnorms    , 'm', label = r'$Norms$',
 		linewidth = _args[ 'lw' ] )
 
 	ax0.grid( linestyle = 'dotted' )
 	ax0.set_xlim( _args[ 'xlim'   ] )
-	ax0.set_ylim( _args[ 'r_ylim' ] )
-	ax0.set_ylabel( r'Position $(km)$')
+	ax0.set_ylim( _args[ 'ylim' ] )
+	ax0.set_xlabel( _args[ 'xlabel' ], size = _args[ 'labelsize' ] )
+	ax0.set_ylabel( r'Velocity $(\dfrac{km}{s})$',
+		size = _args[ 'labelsize' ] )
 
-	for hline in _args[ 'r_hlines' ]:
-		ax0.hlines( hline[ 'val' ], ts[ 0 ], ts[ -1 ],
+	for hline in _args[ 'hlines' ]:
+		ax0.hlines( hline[ 'val' ], _ets[ 0 ], _ets[ -1 ],
 			color     = hline[ 'color' ],
-			linestyle = _args[ 'hline_lstyles' ] )
-
-	''' Velocities '''
-	ax1.plot( ts, states[ :, 3 ], 'r', label = r'$r_x$',
-		linewidth = _args[ 'lw' ] )
-	ax1.plot( ts, states[ :, 4 ], 'g', label = r'$r_y$',
-		linewidth = _args[ 'lw' ] )
-	ax1.plot( ts, states[ :, 5 ], 'b', label = r'$r_z$',
-		linewidth = _args[ 'lw' ] )
-	ax1.plot( ts, vnorms        , 'm', label = r'$Norms$',
-		linewidth = _args[ 'lw' ] )
-
-	ax1.grid( linestyle = 'dotted' )
-	ax1.set_xlim( _args[ 'xlim'   ] )
-	ax1.set_ylim( _args[ 'v_ylim' ] )
-	ax1.set_ylabel( r'Velocity $(\dfrac{km}{s})$' )
-	ax1.set_xlabel( _args[ 'xlabel' ] )
-
-	for hline in _args[ 'v_hlines' ]:
-		ax1.hlines( hline[ 'val' ], ts[ 0 ], ts[ -1 ],
-			color     = hline[ 'color' ],
+			linewidth = _args[ 'lw' ],
 			linestyle = _args[ 'hline_lstyles' ] )
 
 	plt.suptitle( _args[ 'title' ] )
 	plt.tight_layout()
 
 	if _args[ 'legend' ]:
-		ax0.legend()
-		ax1.legend()
+		ax0.legend( fontsize = _args[ 'legend_fontsize' ],
+			loc = 'upper right', framealpha = _args[ 'legend_framealpha' ] )
 
 	if _args[ 'filename' ]:
 		plt.savefig( _args[ 'filename' ], dpi = _args[ 'dpi' ] )

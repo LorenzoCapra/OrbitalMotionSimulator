@@ -6,7 +6,7 @@ from scipy.integrate import ode
 import spiceypy as spice
 
 import planetary_data as pd
-from Tools import calc_atmospheric_density, kep2car, esc_v
+from Tools import calc_atmospheric_density, kep2car, esc_v, state2period
 import SpiceTools
 
 
@@ -32,16 +32,25 @@ def perturbations():
 
 
 class OrbitPropagator:
-    def __init__(self, state0, tspan, dt, kep=False, deg=True, cb=pd.earth,
+    def __init__(self, state0, tspan, dt, et0=None, kep=False, deg=True, cb=pd.earth,
                  perts=perturbations(), mass=0, stop={}, propagator='lsoda',
-                 frame='J2000', date0='2022-11-09'):
+                 frame='J2000', date0='2022-12-02'):
         if kep:
             self.r0, self.v0 = kep2car(state0, deg=deg, mu=cb['mu'])
         else:
             self.r0 = state0[:3]
             self.v0 = state0[3:]
 
-        self.tspan = tspan
+        if type(tspan) == str:
+            self.tspan = float(tspan) * state2period(state0, coes=kep, mu=self.cb['mu'])
+        else:
+            self.tspan = tspan
+
+        if et0 is not None:
+            self.et0 = et0
+        else:
+            self.et0 = spice.str2et(date0)
+
         self.dt = dt
         self.cb = cb
         self.mass = mass
@@ -49,6 +58,14 @@ class OrbitPropagator:
         self.propagator = propagator
         self.frame = frame
         self.date0 = date0
+
+        self.ets = np.arange(self.et0, self.et0 + self.tspan + self.dt, self.dt)
+
+        self.coes_calculated = False
+        self.latlons_calculated = False
+        self.altitudes_calculated = False
+        self.ra_rp_calculated = False
+        self.eclipses_calculated = False
 
         # Total number of steps
         self.n_steps = int(ceil(self.tspan / self.dt)) + 1
@@ -71,6 +88,7 @@ class OrbitPropagator:
         self.ys[0] = np.array(self.y0)
         self.alts[0] = norm(self.r0) - self.cb['radius']
         self.steps = 1
+        # self.ets = np.zeros((self.n_steps, 1))
 
         # Initialize the solver
         self.solver = ode(self.dynamics)
@@ -131,7 +149,7 @@ class OrbitPropagator:
                 self.spice_files_loaded.append(body['spice_file'])
 
             # calculate body states wrt central body:
-            body['states'] = SpiceTools.get_ephemeris(body['name'], self.spice_tspan, self.frame, self.cb['name'])
+            body['states'] = SpiceTools.get_ephemeris(body['name'], self.spice_tspan, self.frame, self.cb['spice_name'])
 
         # ----- Propagate the orbit ----- #
         self.propagate_orbit()
@@ -142,15 +160,19 @@ class OrbitPropagator:
             self.solver.integrate(self.solver.t + self.dt)
             self.ts[self.steps] = self.solver.t
             self.ys[self.steps] = self.solver.y
-            self.alts[self.steps] = np.linalg.norm(self.solver.y[:3]) - self.cb['radius']
-            self.steps += 1
+            self.alts[self.steps] = norm(self.solver.y[:3]) - self.cb['radius']
 
+            if self.check_stop_condition():
+                self.steps += 1
+            else:
+                break
+
+        self.ys = self.ys[:self.steps]
         self.rs = self.ys[:, :3]
         self.vs = self.ys[:, 3:]
         self.alts = self.alts[:self.steps]
-
+        self.ets = self.ets[:self.steps]
         self.states = self.ys
-        self.ets = self.ts
 
     def dynamics(self, t, y):
         if self.perts['thrust']:
@@ -257,29 +279,27 @@ class OrbitPropagator:
         return True
 
     def check_enter_SOI(self):
-        pass
+        body = self.stop['enter_SOI']
+        r_cb2body = spice.spkgps(body['SPICE_ID'], self.ets[self.steps],
+                                 self.frame,  self.cb['SPICE_ID'])[0]
+        r_sc2body = r_cb2body - self.ys[self.steps, :3]
+
+        if norm(r_sc2body) < body['SOI']:
+            print(f"Spacecraft enters SOI of {body['name']}")
+            return False
+        return True
 
     def check_exit_SOI(self):
-        pass
+        if norm(self.ys[self.steps, :3]) > self.cb['SOI']:
+            print(f"Spacecraft exits SOI of {self.cb['name']}")
+            return False
+        return True
 
     def check_stop_condition(self):
-        # for each stop condition in the dictionary:
-        condition = []
-
-        for stop in self.stop:
-
-            condition.append(stop())
-            #if not stop():
-                # stop condition reached, return False:
-                #condition.append(False)
-            #else:
-                # if no stop condition is reached, return True:
-                #return True
-
-        if False in condition:
-            return False
-        else:
-            return True
+        for stop_condition in self.stop_condition_functions:
+            if not stop_condition():
+                return False
+        return True
 
     def calculate_kep(self, deg=True):
         print('Calculating keplerian elements...')
