@@ -1334,3 +1334,230 @@ def plot_velocities( ets, vs, args ):
 		plt.show()
 
 	plt.close()
+
+def plot_cr3bp_2d( mu, rs, args ):
+	_args = {
+		'figsize'      : ( 10, 10 ),
+		'labels'       : [ '' ] * len( rs ),
+		'colors'       : COLORS[ : ],
+		'lw'           : 2.5,
+		'hline_lstyles': 'dashed',
+		'title'        : 'Trajectories',
+		'legend'       : True,
+		'show'         : False,
+		'filename'     : False,
+		'dpi'          : 300,
+	}
+	for key in args.keys():
+		_args[ key ] = args[ key ]
+
+	plt.figure( figsize = _args[ 'figsize' ] )
+	plt.plot( -mu,    0, 'mo', ms = 10 )
+	plt.plot( 1 - mu, 0, 'co', ms = 5  )
+
+	n = 0
+	for r in rs:
+		plt.plot( r[ :, 0 ], r[ :, 1 ], _args[ 'colors' ][ n ],
+			label = _args[ 'labels' ][ n ] )
+		plt.plot( r[ 0, 0 ], r[ 0, 1 ], 'o',
+			color = _args[ 'colors' ][ n ] )
+		n += 1
+
+	plt.grid( linestyle = 'dotted' )
+	plt.title( _args[ 'title' ] )
+	plt.tight_layout()
+
+	if _args[ 'legend' ]:
+		plt.legend( fontsize = 'large' )
+
+	if _args[ 'filename' ]:
+		plt.savefig( _args[ 'filename' ], dpi = _args[ 'dpi' ] )
+		print( 'Saved', _args[ 'filename' ] )
+
+	if _args[ 'show' ]:
+		plt.show()
+
+	plt.close()
+
+def plot_cr3bp_3d( mu, rs, args, vectors = [] ):
+	_args = {
+		'figsize'      : ( 10, 8 ),
+		'labels'       : [ '' ] * len( rs ),
+		'colors'       : COLORS[ : ],
+		'b1_ms'        : 7,
+		'b2_ms'        : 5,
+		'b1_color'     : 'm',
+		'b2_color'     : 'c',
+		'ALR'          : 0.03,
+		'traj_lws'     : 1,
+		'axes_mag'     : 0.8,
+		'axes_custom'  : None,
+		'legend'       : True,
+		'axes_no_fill' : True,
+		'hide_axes'    : False,
+		'azimuth'      : False,
+		'elevation'    : False,
+		'show'         : False,
+		'filename'     : False,
+		'dpi'          : 300,
+		'vector_colors': [ '' ] * len( vectors ),
+		'vector_labels': [ '' ] * len( vectors ),
+		'vector_texts' : False
+	}
+	for key in args.keys():
+		_args[ key ] = args[ key ]
+
+	fig = plt.figure( figsize = _args[ 'figsize' ] )
+	ax  = fig.add_subplot( 111, projection = '3d'  )
+
+	max_val = 0
+	n       = 0
+
+	for r in rs:
+		ax.plot( r[ :, 0 ], r[ :, 1 ], r[ : , 2 ],
+			color = _args[ 'colors' ][ n ], label = _args[ 'labels' ][ n ],
+			zorder = 10, linewidth = _args[ 'traj_lws' ] )
+		ax.plot( [ r[ 0, 0 ] ], [ r[ 0 , 1 ] ], [ r[ 0, 2 ] ], 'o',
+			color = _args[ 'colors' ][ n ] )
+
+		max_val = max( [ r.max(), max_val ] )
+		n += 1
+
+	ax.plot( [ -mu ], [ 0 ], [ 0 ], 'o',
+		ms = _args[ 'b1_ms' ], color = _args[ 'b1_color' ] )
+	ax.plot( [ 1 - mu ], [ 0 ], [ 0 ], 'o',
+		ms = _args[ 'b2_ms' ], color = _args[ 'b2_color' ] )
+
+	for vector in vectors:
+		ax.quiver( 0, 0, 0,
+			vector[ 'r' ][ 0 ], vector[ 'r' ][ 1 ], vector[ 'r' ][ 2 ],
+			color = vector[ 'color' ], label = vector[ 'label' ] )
+
+		if _args[ 'vector_texts' ]:
+			vector[ 'r' ] *= _args[ 'vector_text_scale' ]
+			ax.text( vector[ 'r' ][ 0 ], vector[ 'r' ][ 1 ], vector[ 'r' ][ 2 ],
+				vector[ 'label' ],
+				color = vector[ 'color' ] )
+
+	ax_length = ( 1 - mu ) * 1.3
+	ax.quiver( 0, 0, 0, ax_length, 0, 0, color = 'w',
+		arrow_length_ratio = _args[ 'ALR' ], linewidth = 1 )
+	ax.quiver( 0, 0, 0, 0, ax_length, 0, color = 'w',
+		arrow_length_ratio = _args[ 'ALR' ], linewidth = 1 )
+	ax.quiver( 0, 0, 0, 0, 0, ax_length, color = 'w',
+		arrow_length_ratio = _args[ 'ALR' ], linewidth = 1 )
+
+	if _args[ 'axes_custom' ] is not None:
+		max_val = _args[ 'axes_custom' ]
+	else:
+		max_val *= _args[ 'axes_mag' ]
+
+	ax.set_xlim( [ -max_val, max_val ] )
+	ax.set_ylim( [ -max_val, max_val ] )
+	ax.set_zlim( [ -max_val, max_val ] )
+	ax.set_xlabel( 'X' )
+	ax.set_ylabel( 'Y' )
+	ax.set_zlabel( 'Z' )
+	ax.set_box_aspect( [ 1, 1, 1 ] )
+	ax.set_aspect( 'auto' )
+
+	if _args[ 'azimuth' ] is not False:
+		ax.view_init( elev = _args[ 'elevation' ],
+					  azim = _args[ 'azimuth'   ] )
+
+	if _args[ 'axes_no_fill' ]:
+		ax.w_xaxis.pane.fill = False
+		ax.w_yaxis.pane.fill = False
+		ax.w_zaxis.pane.fill = False
+
+	if _args[ 'hide_axes' ]:
+		ax.set_axis_off()
+
+	if _args[ 'legend' ]:
+		plt.legend()
+
+	if _args[ 'filename' ]:
+		plt.savefig( _args[ 'filename' ], dpi = _args[ 'dpi' ] )
+		print( 'Saved', _args[ 'filename' ] )
+
+	if _args[ 'show' ]:
+		plt.show()
+
+	plt.close()
+
+def cr3bp_pseudopotential( mu, r ):
+	r13 = np.linalg.norm( [ r[ 0 ] + mu, r[ 1 ] ] )
+	r23 = np.linalg.norm( [ r[ 0 ] - 1 + mu, r[ 1 ] ] )
+
+	return ( 1 - mu ) / r13 + mu / r23 + 0.5 * ( r[ 0 ] ** 2 + r[ 1 ] ** 2 )
+
+def plot_pseudopotential_contours( system, args ):
+	_args = {
+		'figsize'      : ( 10, 10 ),
+		'LPs'          : True,
+		'lw'           : 2.5,
+		'clabels'      : False,
+		'levels'       : None,
+		'title'        : 'Trajectories',
+		'legend'       : True,
+		'show'         : False,
+		'filename'     : False,
+		'dpi'          : 300,
+	}
+	for key in args.keys():
+		_args[ key ] = args[ key ]
+
+	plt.figure( figsize = _args[ 'figsize' ] )
+	plt.plot( -system[ 'mu' ],    0, 'mo', ms = 10 )
+	plt.plot( 1 - system[ 'mu' ], 0, 'co', ms = 8  )
+
+	if _args[ 'LPs' ]:
+		plt.plot( system[ 'L1' ], 0, 'ro', ms = 7, label = 'L1' )
+		plt.plot( system[ 'L2' ], 0, 'go', ms = 7, label = 'L2' )
+		plt.plot( system[ 'L3' ], 0, 'bo', ms = 7, label = 'L3' )
+		plt.plot( 0.5 - system[ 'mu' ], 3 ** 0.5 / 2.0,
+			'co', ms = 7, label = 'L4' )
+		plt.plot( 0.5 - system[ 'mu' ], -3 ** 0.5 / 2.0,
+			'mo', ms = 7, label = 'L5' )
+
+	x       = np.linspace( -1.3, 1.3, 200 )
+	y       = np.linspace( -1.3, 1.3, 200 )
+	n_vals  = len( x )
+	omegas  = np.zeros( ( n_vals, n_vals ) )
+
+	if _args[ 'levels' ] is None:
+		levels0 = np.arange( 1, 2, 0.03 )
+		levels1 = np.arange( 2, 7, 0.5 )
+		levels2 = np.arange( 8, 10, 0.5 )
+		levels  = np.concatenate( ( levels0, levels1, levels2 ) )
+	else:
+		levels = _args[ 'levels' ]
+
+	for nx in range( n_vals ):
+		for ny in range( n_vals ):
+			omegas[ ny, nx ] = cr3bp_pseudopotential( system[ 'mu' ],
+				[ x[ nx ], y[ ny ] ] )
+
+	X, Y = np.meshgrid( x, y )
+	cs   = plt.contour( X, Y, omegas, levels = levels )
+
+	if _args[ 'clabels' ]:
+		plt.clabel( cs, inline = 1 )
+
+	plt.grid( linestyle = 'dotted' )
+	plt.title( _args[ 'title' ] )
+	plt.xticks( fontsize = 15 )
+	plt.yticks( fontsize = 15 )
+	plt.tight_layout()
+
+	if _args[ 'legend' ]:
+		plt.legend( fontsize = 'xx-large' )
+
+	if _args[ 'filename' ]:
+		plt.savefig( _args[ 'filename' ], dpi = _args[ 'dpi' ] )
+		print( 'Saved', _args[ 'filename' ] )
+
+	if _args[ 'show' ]:
+		plt.show()
+
+	plt.close()
