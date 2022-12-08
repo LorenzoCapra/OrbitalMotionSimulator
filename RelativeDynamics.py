@@ -9,26 +9,11 @@ from math import sqrt, cos, sin, ceil
 import matplotlib.pyplot as plt
 
 from Tools import planetary_data as pd
+from Tools.Tools import state2period
 
 COLORS = [
     'm', 'deeppink', 'chartreuse', 'w', 'springgreen', 'peachpuff',
     'white', 'lightpink', 'royalblue', 'lime', 'aqua' ] * 100
-
-
-def _args():
-    return {
-        'tspan': None,
-        'dt': 10,
-        'propagator': 'LSODA',
-        'atol': 1e-9,
-        'rtol': 1e-9,
-        'dense_output': False,
-        'model': 'CW',
-        'mu': pd.earth['mu'],
-        'R': 6878,  # h=500km by default
-        'a': 6878,  # circular orbit by default
-        'e': 0,
-    }
 
 
 def plot_relative_trajectory(rs, args, vectors=[]):
@@ -46,7 +31,7 @@ def plot_relative_trajectory(rs, args, vectors=[]):
         'hide_axes': False,
         'azimuth': False,
         'elevation': False,
-        'show': False,
+        'show': True,
         'filename': False,
         'dpi': 300,
         'vector_colors': [''] * len(vectors),
@@ -61,7 +46,7 @@ def plot_relative_trajectory(rs, args, vectors=[]):
 
     max_val = 0
     n = 0
-    cs = ['c', 'b', 'r', 'k', 'g', 'm', 'y', 'w', 'r-.']
+    # cs = ['c', 'b', 'r', 'k', 'g', 'm', 'y', 'w', 'r-.']
 
     for r in rs:
         ax.plot(r[:, 0], r[:, 1], r[:, 2],
@@ -69,7 +54,7 @@ def plot_relative_trajectory(rs, args, vectors=[]):
                 zorder=10, linewidth=_args['traj_lws'])
         ax.plot([r[0, 0]], [r[0, 1]], [r[0, 2]], 'o',
                 color=_args['colors'][n])
-        ax.scatter3D(0, 0, 0, c='k', marker='*', label='Target')
+        ax.scatter3D(0, 0, 0, c='y', marker='*', label='Target')
 
         max_val = max([r.max(), max_val])
         n += 1
@@ -126,6 +111,22 @@ def plot_relative_trajectory(rs, args, vectors=[]):
     plt.close()
 
 
+def _args():
+    return {
+        'state0': [0.01, 0.1, 0.01, 0, 0.01*1e-3, 0.001*1e-3],
+        'tspan': '2',
+        'dt': 10,
+        'propagator': 'LSODA',
+        'atol': 1e-9,
+        'rtol': 1e-9,
+        'dense_output': False,
+        'model': 'CW',
+        'mu': pd.earth['mu'],
+        'R': 6878,  # h=500km by default
+        'coes': [6878, 0, 0, 0, 0, 0],
+    }
+
+
 class RelDynPropagtor:
     def __init__(self, args=_args()):
 
@@ -133,9 +134,13 @@ class RelDynPropagtor:
         for key in args.keys():
             self.args[key] = args[key]
 
-        self.tspan = self.args['tspan']
+        if type(self.args['tspan']) == str:
+            self.tspan = float(self.args['tspan']) * state2period(self.args['coes'], mu=self.args['mu'])
+        else:
+            self.tspan = self.args['tspan']
+
         self.dt = self.args['dt']
-        self.ets = np.arange(0, 0 + self.tspan + self.dt, self.dt)
+        self.ets = np.arange(0, 0 + self.tspan, self.dt)
 
         # Total number of steps
         self.n_steps = int(ceil(self.tspan / self.dt)) + 1
@@ -151,9 +156,14 @@ class RelDynPropagtor:
         else:
             raise Exception('Invalid model selected.')
 
+        self.states[0, :6] = self.args['state0']
+
         self.steps = 1
 
-    def diffy_q(self, state):
+        # Propagate relative motion
+        self.propagate_orbit(self.states[0, :])
+
+    def diffy_q(self,t,state):
 
         # Retrieve relative position and velocity
         r, v = state[0:3], state[3:6]
@@ -162,7 +172,7 @@ class RelDynPropagtor:
             if len(state) != 6:
                 raise Exception(f'The state vector must have 6 elements! Its length is {len(state)}')
 
-            n = sqrt(self.args['mu']/self.args['R'])
+            n = sqrt(self.args['mu']/self.args['R']**3)
 
             dx, dy, dz = v[0], v[1], v[2]
             ddx = 2*n*v[1] + 3*r[0]*n**2
@@ -180,7 +190,7 @@ class RelDynPropagtor:
             # Update true anomaly
             teta = state[7]
 
-            n = sqrt(self.args['mu']/self.args['R'])
+            n = sqrt(self.args['mu']/self.args['R']**3)
 
             dteta = (n*(1+self.args['e']*cos(teta))**2) / (1-self.args['e']**2) ** (3/2)
             ddteta = -2*(n**2)*self.args['e']*sin(teta)*((1+self.args['e']*cos(teta))**3) / ((1-self.args['e']**2)**3)
@@ -227,7 +237,7 @@ class RelDynPropagtor:
             # Integrate the true anomaly
             dteta = np.array([h/(R**2)])
             # Integrate orbit inclination
-            i_dot = np.arra([0])
+            i_dot = np.array([0])
             # Integrate the angular momentum
             h_dot = np.array([0])
 
@@ -307,9 +317,11 @@ class RelDynPropagtor:
             t_span=(0, self.tspan),
             y0=state0,
             method=self.args['propagator'],
+            t_eval=self.ets,
             atol=self.args['atol'],
             rtol=self.args['rtol'],
-            dense_output=self.args['dense_output'])
+            dense_output=self.args['dense_output'],
+            )
 
         self.states = ode_sol.y.T
         self.ets = ode_sol.t

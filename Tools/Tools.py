@@ -6,7 +6,8 @@ import datetime
 import os
 import spiceypy as spice
 
-import SpiceTools as st, planetary_data as pd
+from Tools import SpiceTools as st
+from Tools import planetary_data as pd
 
 d2r = np.pi/180.0
 r2d = 180.0/np.pi
