@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import ode
 import spiceypy as spice
 
-from Tools.Tools import calc_atmospheric_density, kep2car, esc_v, state2period
+from Tools.Tools import calc_atmospheric_density, kep2car, esc_v, state2period, compute_windowed_avg
 from Tools import SpiceTools, planetary_data as pd
 
 g0 = 9.81
@@ -32,23 +32,32 @@ def perturbations():
 class OrbitPropagator:
     def __init__(self, state0, tspan, dt, et0=None, kep=False, deg=True, cb=pd.earth,
                  perts=perturbations(), mass=0, stop={}, propagator='lsoda',
-                 frame='J2000', date0='2022-12-02'):
+                 frame='J2000', date0='2022-12-02', propagate=True):
+
+        # Load leap seconds kernel:
+        leap_seconds = 'Tools/Data/spice/lsk/naif0012.tls'
+        spice.furnsh(leap_seconds)
+
+        # Check if orbital elements are inputs
         if kep:
-            self.r0, self.v0 = kep2car(state0, deg=deg, mu=cb['mu'])
+            self.r0, self.v0 = kep2car(state0[:6], deg=deg, mu=cb['mu'])
         else:
             self.r0 = state0[:3]
             self.v0 = state0[3:]
 
+        # Check if number of periods is input as string
         if type(tspan) == str:
             self.tspan = float(tspan) * state2period(state0, coes=kep, mu=self.cb['mu'])
         else:
             self.tspan = tspan
 
+        # Initialize timing
         if et0 is not None:
             self.et0 = et0
         else:
             self.et0 = spice.str2et(date0)
 
+        # Instantiate class variables
         self.dt = dt
         self.cb = cb
         self.mass = mass
@@ -56,6 +65,7 @@ class OrbitPropagator:
         self.propagator = propagator
         self.frame = frame
         self.date0 = date0
+        self.propagate = propagate
 
         self.ets = np.arange(self.et0, self.et0 + self.tspan + self.dt, self.dt)
 
@@ -91,10 +101,7 @@ class OrbitPropagator:
         # Initialize the solver
         self.solver = ode(self.dynamics)
         self.solver.set_integrator(self.propagator)
-        self.solver.set_initial_value(self.y0, 0)
-
-        # List of Spice files
-        self.spice_files_loaded = []
+        self.solver.set_initial_value(self.y0, 0)  # state and time
 
         # Define perturbations dictionary
         self.perts = perts
@@ -109,21 +116,19 @@ class OrbitPropagator:
         for key in self.stop.keys():
             self.stop_condition_functions.append(self.stop_condition_map[key])
 
-        # load leap seconds kernel:
-        leap_seconds = 'Data/spice/lsk/naif0012.tls'
+        # List of Spice files
+        self.spice_files_loaded = []
 
-        spice.furnsh(leap_seconds)
-
-        # add to list of loaded spice files:
+        # Add to list of loaded spice files:
         self.spice_files_loaded.append(leap_seconds)
 
-        # convert start date to seconds after J2000:
+        # Convert start date to seconds after J2000:
         self.start_time = spice.utc2et(self.date0)
 
-        # create time span array in seconds after J2000:
+        # Create time span array in seconds after J2000:
         self.spice_tspan = np.linspace(self.start_time, self.start_time + self.tspan, self.n_steps)
 
-        # check if loading in spice data:
+        # Check if loading in spice data:
         if self.perts['n_bodies'] or self.perts['srp']:
 
             # if srp, get states of the Sun:
@@ -137,7 +142,7 @@ class OrbitPropagator:
                 # calculate central body's state throughout the entire propagation wrt the Sun:
                 self.cb['states'] = SpiceTools.get_ephemeris(self.cb['name'], self.spice_tspan, self.frame, 'SUN')
 
-        # load kernels for each body:
+        # Load kernels for each body:
         for body in self.perts['n_bodies']:
             # if spice hasn't already been loaded:
             if body['spice_file'] not in self.spice_files_loaded:
@@ -150,7 +155,8 @@ class OrbitPropagator:
             body['states'] = SpiceTools.get_ephemeris(body['name'], self.spice_tspan, self.frame, self.cb['spice_name'])
 
         # ----- Propagate the orbit ----- #
-        self.propagate_orbit()
+        if self.propagate:
+            self.propagate_orbit()
 
     def propagate_orbit(self):
         # Propagate the orbit
@@ -171,6 +177,7 @@ class OrbitPropagator:
         self.alts = self.alts[:self.steps]
         self.ets = self.ets[:self.steps]
         self.states = self.ys
+        self.ts = self.ts[:self.steps]
 
     def dynamics(self, t, y):
         if self.perts['thrust']:
@@ -248,39 +255,39 @@ class OrbitPropagator:
         return [vx, vy, vz, a[0], a[1], a[2]]
 
     def check_deorbit(self):
-        if self.alts[self.steps] < self.cb['deorbit_altitude']:
-            print('Spacecraft de-orbited after %.1f seconds' % self.ts[self.steps])
+        if self.alts[self.steps-1] < self.cb['deorbit_altitude']:
+            print('Spacecraft de-orbited after %.1f seconds' % self.ts[self.steps-1])
             return False
         else:
             return True
 
     def check_max_alt(self):
-        if self.alts[self.steps] > self.stop['max_alt']:
-            print('Spacecraft reached maximum altitude after %.1f seconds' % self.ts[self.steps])
+        if self.alts[self.steps-1] > self.stop['max_alt']:
+            print('Spacecraft reached maximum altitude after %.1f seconds' % self.ts[self.steps-1])
             return False
         else:
             return True
 
     def check_min_alt(self):
-        if self.alts[self.steps] < self.stop['min_alt']:
-            print('Spacecraft reached minimum altitude after %.1f seconds' % self.ts[self.steps])
+        if self.alts[self.steps-1] < self.stop['min_alt']:
+            print('Spacecraft reached minimum altitude after %.1f seconds' % self.ts[self.steps-1])
             return False
         else:
             return True
 
     def check_escape_velocity(self):
-        # if escape velocity is less than current velocity norm:
-        if esc_v(np.linalg.norm(self.ys[self.steps, :3]),
-                   mu=self.cb['mu']) < np.linalg.norm(self.ys[self.steps, 3:6]):
-            print('Spacecraft reached escape velocity after %.1f seconds' % self.ts[self.steps])
+        # If escape velocity is less than current velocity norm:
+        if esc_v(np.linalg.norm(self.ys[self.steps-1, :3]),
+                   mu=self.cb['mu']) < np.linalg.norm(self.ys[self.steps-1, 3:6]):
+            print('Spacecraft reached escape velocity after %.1f seconds' % self.ts[self.steps-1])
             return False
         return True
 
     def check_enter_SOI(self):
         body = self.stop['enter_SOI']
-        r_cb2body = spice.spkgps(body['SPICE_ID'], self.ets[self.steps],
+        r_cb2body = spice.spkgps(body['SPICE_ID'], self.ets[self.steps-1],
                                  self.frame,  self.cb['SPICE_ID'])[0]
-        r_sc2body = r_cb2body - self.ys[self.steps, :3]
+        r_sc2body = r_cb2body - self.ys[self.steps-1, :3]
 
         if norm(r_sc2body) < body['SOI']:
             print(f"Spacecraft enters SOI of {body['name']}")
@@ -288,7 +295,7 @@ class OrbitPropagator:
         return True
 
     def check_exit_SOI(self):
-        if norm(self.ys[self.steps, :3]) > self.cb['SOI']:
+        if norm(self.ys[self.steps-1, :3]) > self.cb['SOI']:
             print(f"Spacecraft exits SOI of {self.cb['name']}")
             return False
         return True
@@ -360,25 +367,35 @@ class OrbitPropagator:
             plt.savefig(title + '.png', dpi=300)
 
     def plot_altitudes(self, show_plot=False, save_plot=False, hours=False, days=False,
-                       title='Radial distance over time', figsize=(12, 8), dpi=300):
+                       title='Radial distance over time', show_avg=False, window_avg=50,
+                       figsize=(12, 8), dpi=300):
+
+        window_mean = compute_windowed_avg(self.alts, window=window_avg)
+
         # x-axis:
         if hours:
             ts = self.ts / 3600
             xlabel = 'Time Elapsed (hours)'
         elif days:
-            ts = self.ts / 3600 / 24
+            ts = self.ts / (3600 * 24)
             xlabel = 'Time Elapsed (days)'
         else:
             ts = self.ts
             xlabel = 'Time Elapsed (s)'
 
         plt.figure(figsize=figsize)
-        plt.plot(ts, self.alts, 'w')
+        plt.plot(ts, self.alts, 'k', label='Altitude')
         plt.grid(True)
         plt.xlabel(xlabel)
         plt.ylabel('Altitude (km)')
         plt.title(title)
         if show_plot:
+            if show_avg:
+                index = ts[:-window_avg]
+                plt.plot(index, window_mean, c='r', label='Avg')
+            if not self.check_deorbit():
+                plt.hlines(self.cb['deorbit_altitude'],ts[0],ts[-1],'b','--',label='Deorbiting altitude')
+            plt.legend()
             plt.show()
         if save_plot:
             plt.savefig(title + '.png', dpi=dpi)
@@ -388,20 +405,21 @@ class OrbitPropagator:
         self.periapses = self.kep[:, 0] * (1 - self.kep[:, 1])
 
     def plot_apo_peri(self, show_plot=False, hours=False, days=False, save_plot=False,
-                      title='Apoapse and Periapse over Time', dpi=300):
-        plt.figure(figsize=(16, 8))
+                      title='Apoapse and Periapse over Time', figsize=(12, 8), dpi=300):
+        plt.figure(figsize=figsize)
 
         # x-axis:
         if hours:
             ts = self.ts / 3600
             xlabel = 'Time Elapsed (hours)'
         elif days:
-            ts = self.ts / 3600 / 24
+            ts = self.ts / (3600 * 24)
             xlabel = 'Time Elapsed (days)'
         else:
             ts = self.ts
             xlabel = 'Time Elapsed (s)'
 
+        self.calculate_apo_peri()
         plt.plot(ts, self.apoapses, 'b', label='Apoapse')
         plt.plot(ts, self.periapses, 'r', label='Periapse')
 
@@ -418,21 +436,25 @@ class OrbitPropagator:
             plt.savefig(title + '.png', dpi=dpi)
 
     def plot_kep(self, hours=False, days=False, show_plot=False, save_plot=False,
-                 title='Kep', figsize=(12, 8), dpi=300):
+                 title='Kep', show_avg=False, window_avg=50, figsize=(12, 8), dpi=300):
         print('Plotting keplerian elements...')
 
-        # create figure and axis instances:
+        # Create figure and axis instances:
         fig, axs = plt.subplots(nrows=2, ncols=3, figsize=figsize)
 
-        # figure title:
+        # Figure title:
         fig.suptitle(title, fontsize=20)
+
+        window_mean = np.zeros((self.kep.shape[0]-window_avg, self.kep.shape[1]))
+        for i in range(self.kep.shape[1]):
+            window_mean[:,i] = compute_windowed_avg(self.kep[:,i], window=window_avg)
 
         # x-axis:
         if hours:
             ts = self.ts / 3600
             xlabel = 'Time Elapsed (hours)'
         elif days:
-            ts = self.ts / 3600 / 24
+            ts = self.ts / (3600 * 24)
             xlabel = 'Time Elapsed (days)'
         else:
             ts = self.ts
@@ -479,6 +501,14 @@ class OrbitPropagator:
         axs[1, 2].set_xlabel(xlabel)
 
         if show_plot:
+            if show_avg:
+                index = ts[:-window_avg]
+                axs[0, 0].plot(index, window_mean[:,5], c='r')
+                axs[1, 0].plot(index, window_mean[:,0], c='r')
+                axs[0, 1].plot(index, window_mean[:,1], c='r')
+                axs[1, 1].plot(index, window_mean[:,2], c='r')
+                axs[0, 2].plot(index, window_mean[:,3], c='r')
+                axs[1, 2].plot(index, window_mean[:,4], c='r')
             plt.show()
         if save_plot:
             plt.savefig(title + '.png', dpi=dpi)
