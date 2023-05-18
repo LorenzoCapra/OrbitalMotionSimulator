@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 from scipy.integrate import ode
 import spiceypy as spice
 
-from Tools.Tools import calc_atmospheric_density, kep2car, esc_v, state2period, compute_windowed_avg
+from Tools.Tools import calc_atmospheric_density, kep2car, esc_v, state2period, \
+    compute_windowed_avg, cart2lat
 from Tools import SpiceTools, planetary_data as pd
 
 g0 = 9.81
@@ -517,4 +518,5 @@ class OrbitPropagator:
         pass
 
     def calc_lat_lon(self):
-        self.lat_longs, self.rs_ecef, _ = SpiceTools.inert2latlong(self.rs, self.spice_tspan, self.frame)
+        self.lat_longs = SpiceTools.inert2latlong(self.rs, self.spice_tspan, self.frame)
+        # self.lat_longs = cart2lat(self.rs, self.frame, self.cb['body_fixed_frame'], self.spice_tspan)

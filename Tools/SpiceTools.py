@@ -133,7 +133,11 @@ def rv2kep(state, et=0, mu=pd.earth['mu'], deg=True):
 
     return [a, e, i, raan, aop, ta]
 
-def inert2ecef(rs, tspan, frame='J200', filenames=None):
+def inert2ecef(rs, tspan, frame='J2000', filenames=None):
+    spice.furnsh('Tools/Data/spice/spk/earth_200101_990628_predict.bpc')
+    spice.furnsh('Tools/Data/spice/spk/de432s.bsp')
+    spice.furnsh('Tools/Data/spice/pck/pck00010.tpc')
+
     steps = rs.shape[0]
     Cs = np.zeros((steps, 3, 3))
     rs_ecef = np.zeros(rs.shape)
@@ -147,7 +151,7 @@ def inert2ecef(rs, tspan, frame='J200', filenames=None):
 
     return rs_ecef, Cs
 
-def inert2latlong(rs, tspan, frame='J200', filenames=None):
+def inert2latlong(rs, tspan, frame='J2000', filenames=None):
     steps = rs.shape[0]
     latlongs = np.zeros((steps, 3))
     rs_ecef, Cs = inert2ecef(rs, tspan, frame, filenames)
@@ -156,4 +160,4 @@ def inert2latlong(rs, tspan, frame='J200', filenames=None):
         r_norm, lat, lon = spice.reclat(rs_ecef[step, :])
         latlongs[step, :] = [lat*r2d, lon*r2d, r_norm]
 
-    return latlongs, rs_ecef, Cs
+    return latlongs

@@ -35,12 +35,12 @@ COLORS = [
 
 COASTLINES_COORDINATES_FILE = os.path.join(
     os.path.dirname( os.path.realpath( __file__ ) ),
-    os.path.join('../Data', 'coastlines.csv')
+    os.path.join('Data', 'coastlines.csv')
     )
 
 EARTH_SURFACE_IMAGE = os.path.join(
     os.path.dirname( os.path.realpath( __file__ ) ),
-    os.path.join('../Data', 'earth_surface.png')
+    os.path.join('Data', 'earth_surface.png')
     )
 
 SURFACE_BODY_MAP = {
@@ -53,7 +53,7 @@ CITY_COLORS = [
 
 WORLD_CITIES_FILE = os.path.join(
     os.path.dirname( os.path.realpath( __file__ ) ),
-    os.path.join('../Data', 'world_cities.csv')
+    os.path.join('Data', 'world_cities.csv')
     )
 
 city_list0 = [
@@ -108,6 +108,11 @@ city_list0 = [
      'Lima',                                # Peru
      'Akure'                                # Nigeria
 ]
+
+frame_transform_dict = {
+    3: spice.pxform,
+    6: spice.sxform
+}
 
 
 def plot_orbits(rs, args, vectors=[]):
@@ -734,11 +739,12 @@ def groundtracks(coords, labels=None, city_names=None, cs=['w', 'C3', 'b', 'g', 
     if show_plot:
         plt.show()
 
-def plot_groundtracks( coords, args ):
+def plot_groundtracks(coords, args={}):
     _args = {
+        'n_sat'      : 1,
         'figsize'    : ( 18, 9 ),
         'markersize' : 1,
-        'labels'     : [ '' ] * len( coords ),
+        'labels'     : [ '' ] * len(coords),
         'city_names' : city_list0,
         'colors'     : [ 'c', 'r', 'b', 'g', 'w', 'y' ],
         'grid'       : True,
@@ -771,13 +777,16 @@ def plot_groundtracks( coords, args ):
         plt.plot( coast_coords[ :, 0 ], coast_coords[ :, 1 ], 'mo',
             markersize = 0.3 )
 
-    for n in range( len( coords ) ):
-        plt.plot( [ coords[ n ][ 0, 1 ] ], [ coords[ n ][ 0, 2 ] ], 'o',
-            color = _args[ 'colors' ][ n ],
-            label = _args[ 'labels' ][ n ] )
-        plt.plot( coords[ n ][ 1:, 1 ], coords[ n ][ 1:, 2 ], 'o',
-            color = _args[ 'colors' ][ n ],
-            markersize = _args[ 'markersize' ] )
+    if _args['n_sat']>1:
+        for n in range( len( coords ) ):
+            plt.plot( [ coords[ n ][ 0, 0 ] ], [ coords[ n ][ 0, 1 ] ], 'o',
+                color = _args[ 'colors' ][ n ],
+                label = _args[ 'labels' ][ n ] )
+            plt.plot( coords[ n ][ 1:, 0 ], coords[ n ][ 1:, 1 ],
+                color = _args[ 'colors' ][ n ],
+                markersize = _args[ 'markersize' ] )
+    else:
+        plt.plot(coords[:,0], coords[:,1], color = _args[ 'colors' ][ 0 ], label = _args[ 'labels' ][ 0 ] )
 
     # TODO save this as a .json
     cities = city_dict()
@@ -1570,3 +1579,47 @@ def compute_windowed_avg(array, window=50):
         window_mean = np.append(window_mean, np.mean(array[j:j + window_size]))
 
     return window_mean
+
+
+def frame_transform(arr, frame_from, frame_to, ets):
+    '''
+    Calculate length 3 or 6 vectors from
+    "frame_from" frame to "frame_to" frame using SPICE
+    '''
+    transformed = np.zeros(arr.shape)
+    func = frame_transform_dict[arr.shape[1]]
+
+    for step in range(arr.shape[0]):
+        matrix = func(frame_from, frame_to, ets[step])
+        transformed[step] = np.dot(matrix, arr[step])
+
+    return transformed
+
+def cart2lat( rs, frame_from = None, frame_to = None, ets = None, deg = True ):
+    '''
+    Calculate latitudinal coordinates given cartesian coordinates
+    optionally calculating cartesian coordinates in new frame
+    before coordinate conversion
+    '''
+    spice.furnsh('Tools/Data/spice/spk/earth_200101_990628_predict.bpc')
+    spice.furnsh('Tools/Data/spice/spk/de432s.bsp')
+    spice.furnsh('Tools/Data/spice/pck/pck00010.tpc')
+
+    if frame_from is not None and frame_from != frame_to:
+        rs = frame_transform( rs, frame_from, frame_to, ets )
+
+    steps   = rs.shape[ 0 ]
+    latlons = np.zeros( ( steps, 3 ) )
+
+    for step in range( steps ):
+        '''
+        Note: spice.reclat function returns latitudinal
+        coordinates in the following order:
+        radial, longitude, latitude
+        '''
+        latlons[ step ] = spice.reclat( rs[ step ] )
+
+    if deg:
+        latlons[ :, 1: ] *= r2d
+
+    return latlons
