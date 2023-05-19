@@ -155,7 +155,7 @@ def plot_orbits(rs, args, vectors=[]):
 
     max_val = 0
     n = 0
-    cs = ['c', 'b', 'r', 'k', 'g', 'm', 'y', 'w', 'r-.']
+    cs = ['r', 'g', 'c', 'b', 'g', 'm', 'y', 'w', 'r-.']
 
     for r in rs:
         _r = r.copy() * dist_handler[_args['dist_unit']]
@@ -192,7 +192,7 @@ def plot_orbits(rs, args, vectors=[]):
     _x = _args['cb_radius'] * np.cos(_u) * np.sin(_v)
     _y = _args['cb_radius'] * np.sin(_u) * np.sin(_v)
     _z = _args['cb_radius'] * np.cos(_v)
-    ax.plot_surface(_x, _y, _z, cmap=_args['cb_cmap'], zorder=1)
+    ax.plot_surface(_x, _y, _z, cmap=_args['cb_cmap'], zorder=0)
 
     if _args['cb_SOI'] is not None:
         _args['cb_SOI'] *= dist_handler[_args['dist_unit']]
@@ -259,16 +259,20 @@ def plot_n_orbits(rs, labels, cb=pd.earth, show_plot=False, save_plot=False, tit
     # Plot trajectories
     j = 0
     max_val = 0
+    n = 0
+    cs = ['r', 'g', 'c', 'b', 'g', 'm', 'y', 'w', 'r-.']
     for r in rs:
         if AU:
             r /= km2AU
-        ax.plot(r[:, 0], r[:, 1], r[:, 2], label=labels[j])
-        ax.scatter3D(r[0, 0], r[0, 1], r[0, 2])
+        ax.plot(r[:, 0], r[:, 1], r[:, 2], label=labels[j], color=cs[n], zorder=10)
+        ax.scatter3D(r[0, 0], r[0, 1], r[0, 2], color=cs[n])
         j += 1
 
         max__ = np.max(r)
         if max__ > max_val:
             max_val = max__
+
+        n += 1
 
     r_plot = cb['radius']
     if AU:
@@ -279,7 +283,7 @@ def plot_n_orbits(rs, labels, cb=pd.earth, show_plot=False, save_plot=False, tit
     _x = r_plot * np.cos(_u) * np.sin(_v) * k
     _y = r_plot * np.sin(_u) * np.sin(_v) * k
     _z = r_plot * np.cos(_v) * k
-    ax.plot_surface(_x, _y, _z, cmap=cmap)
+    ax.plot_surface(_x, _y, _z, cmap=cmap, zorder=0)
 
     # Plot the x,y,z axis:
     x, y, z = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]

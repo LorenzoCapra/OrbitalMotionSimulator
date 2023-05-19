@@ -313,6 +313,8 @@ class OrbitPropagator:
         for n in range(self.steps):
             self.kep[n, :] = SpiceTools.rv2kep(self.ys[n, :6], mu=self.cb['mu'], deg=deg)
 
+        self.kep = self.kep[:self.steps,:]
+
     def plot(self, cmap='Blues', AU=False, show_plot=False, save_plot=False, title='Test title', k=1):
         fig = plt.figure(figsize=(12, 8))
         ax = fig.add_subplot(111, projection='3d')
@@ -323,7 +325,7 @@ class OrbitPropagator:
             self.rs /= km2AU
             self.cb['radius'] /= km2AU
 
-        ax.plot(self.rs[:, 0], self.rs[:, 1], self.rs[:, 2], 'r', label='Trajectory', zorder=3)
+        ax.plot(self.rs[:, 0], self.rs[:, 1], self.rs[:, 2], 'r', label='Trajectory', zorder=10)
         ax.scatter3D(self.rs[0, 0], self.rs[0, 1], self.rs[0, 2], 'wo', label='Initial Position')
 
         max__ = np.max(self.rs)
@@ -372,6 +374,9 @@ class OrbitPropagator:
                        figsize=(12, 8), dpi=300):
 
         window_mean = compute_windowed_avg(self.alts, window=window_avg)
+
+        if window_avg>self.steps:
+            show_avg = False
 
         # x-axis:
         if hours:
@@ -446,9 +451,13 @@ class OrbitPropagator:
         # Figure title:
         fig.suptitle(title, fontsize=20)
 
-        window_mean = np.zeros((self.kep.shape[0]-window_avg, self.kep.shape[1]))
-        for i in range(self.kep.shape[1]):
-            window_mean[:,i] = compute_windowed_avg(self.kep[:,i], window=window_avg)
+        if window_avg>self.steps:
+            show_avg = False
+            window_mean = 0
+        else:
+            window_mean = np.zeros((self.kep.shape[0]-window_avg, self.kep.shape[1]))
+            for i in range(self.kep.shape[1]):
+                window_mean[:,i] = compute_windowed_avg(self.kep[:,i], window=window_avg)
 
         # x-axis:
         if hours:
